@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,13 +59,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.syf.wanandroidcompose.R
+import com.syf.wanandroidcompose.ui.home.HomeViewModel
 import com.syf.wanandroidcompose.ui.theme.WanAndroidComposeTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeView() {
+fun HomeView(navController: NavController) {
+    val viewModel: HomeViewModel = viewModel()
+
     data class PersonItem(
         val id: Int,
         @DrawableRes val imageResId: Int,
@@ -383,7 +391,7 @@ fun ChipTabRow(
 @Composable
 fun HomePreview() {
     WanAndroidComposeTheme {
-        HomeView()
+        HomeView(viewModel())
 //        Greeting("Android")
     }
 }
