@@ -44,10 +44,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.syf.wanandroidcompose.R
+import com.syf.wanandroidcompose.ui.home.HomeViewModel
 import com.syf.wanandroidcompose.ui.theme.WanAndroidComposeTheme
 import kotlinx.serialization.Serializable
 
@@ -172,7 +174,7 @@ fun AppMainView() {
 fun HomeDestination() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Profile) {
-        composable<Profile> { HomeView( /* ... */) }
+        composable<Profile> { HomeView(navController) }
 //        composable<FriendsList> { FriendsListScreen( /* ... */ ) }
         // Add more destinations similarly.
     }
@@ -182,9 +184,7 @@ fun HomeDestination() {
 fun ProjectDestination() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Profile) {
-        composable<Profile> { HomeView( /* ... */) }
-//        composable<FriendsList> { FriendsListScreen( /* ... */ ) }
-        // Add more destinations similarly.
+        composable<Profile> { HomeView(navController) }
     }
 }
 
@@ -192,9 +192,7 @@ fun ProjectDestination() {
 fun TreeDestination() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Profile) {
-        composable<Profile> { HomeView( /* ... */) }
-//        composable<FriendsList> { FriendsListScreen( /* ... */ ) }
-        // Add more destinations similarly.
+        composable<Profile> { HomeView( navController) }
     }
 }
 
@@ -202,9 +200,8 @@ fun TreeDestination() {
 fun ProfileDestination() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Profile) {
-        composable<Profile> { HomeView( /* ... */) }
-//        composable<FriendsList> { FriendsListScreen( /* ... */ ) }
-        // Add more destinations similarly.
+        composable<Profile> { HomeView( navController) }
+
     }
 }
 
