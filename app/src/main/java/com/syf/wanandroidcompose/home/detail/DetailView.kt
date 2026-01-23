@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,7 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
     var webView: WebView? by remember { mutableStateOf(null) }
-    var progress by remember { mutableStateOf(0f) }
+    var progress by remember { mutableFloatStateOf(0f) }
     var pageTitle by remember { mutableStateOf(title ?: "详情") }
 
     // Intercept back press for WebView history
