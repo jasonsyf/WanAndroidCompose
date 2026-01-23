@@ -1,204 +1,189 @@
-# 玩 Android Compose - 简明指南
+# WanAndroid Compose
 
-## 📱 项目简介
+<div align="center">
 
-这是一个使用 **Jetpack Compose** 和 **MVI 架构**构建的现代化 Android 应用，展示了最新的 Android 开发最佳实践。
+![WanAndroid Compose Banner](docs/img/banner.png)
 
-## ✨ 核心特性
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Architecture](https://img.shields.io/badge/Architecture-MVI-orange?style=for-the-badge)](https://developer.android.com/topic/architecture)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
-### 🏗️ MVI 架构
-- **单向数据流**：Action → State → UI
-- **状态管理清晰**：所有 UI 状态集中管理
-- **易于测试**：逻辑与 UI 分离
+**极致体验 · 现代架构 · 纯粹 Compose**
 
-### 🎨 纯 Compose UI
-- 100% 声明式 UI，无 XML
-- Material Design 3
-- 流畅动画效果
+[✨ 核心亮点](#-核心亮点) • [📱 功能预览](#-功能预览) • [🛠 技术架构](#-技术架构) • [🚀 快速开始](#-快速开始)
 
-### 🚀 优化的 BaseViewModel
-```kotlin
-class HomeViewModel : BaseViewModelOptimized<HomeAction, HomeState>() {
-    // ✅ Action 缓冲区 64
-    // ✅ 自动异常处理
-    // ✅ 支持取消机制
-    // ✅ 自动日志记录
-}
-```
-
-### 🌐 强大的网络层
-```kotlin
-// 简单易用
-apiRequest { apiService.getArticleList(0) }
-    .collect { result ->
-        result
-            .onLoading { /* 加载中 */ }
-            .onSuccess { data -> /* 成功 */ }
-            .onError { _, msg, _ -> /* 失败 */ }
-    }
-```
-
-## 🛠 技术栈
-
-| 技术 | 版本 |
-|------|------|
-| Kotlin | 2.2.21 |
-| Jetpack Compose | 2024.09.00 |
-| Retrofit | 3.0.0 |
-| OkHttp | 5.3.2 |
-| Navigation | 2.9.6 |
-
-## 🚀 快速开始
-
-```bash
-# 克隆项目
-git clone https://github.com/yourusername/WanAndroidCompose.git
-
-# 打开 Android Studio 并运行
-./gradlew assembleDebug
-```
-
-## 📂 核心目录
-
-```
-ui/
-├── common/                    # 基础组件
-│   ├── BaseViewModelOptimized.kt     ⭐ 优化的 ViewModel
-│   └── BaseStateFlowViewModel.kt     StateFlow 版本
-│
-├── network/                   # 网络层 ⭐
-│   ├── ApiResult.kt          结果封装
-│   ├── RetrofitClient.kt     Retrofit 配置
-│   ├── ApiExtensions.kt      扩展函数
-│   └── WanAndroidApiService.kt  API 定义
-│
-├── intentAndState/            # MVI 定义
-│   └── HomeAction.kt         Action/State
-│
-└── home/                      # 功能模块
-    └── HomeViewModel.kt
-```
-
-## 💡 代码示例
-
-### 定义 Action 和 State
-
-```kotlin
-sealed class HomeAction : Action {
-    object LoadData : HomeAction()
-    object Refresh : HomeAction()
-}
-
-data class HomeState(
-    val isLoading: Boolean = false,
-    val articles: List<Article> = emptyList(),
-    val error: String? = null
-) : State
-```
-
-### 创建 ViewModel
-
-```kotlin
-class HomeViewModel : BaseViewModelOptimized<HomeAction, HomeState>() {
-    
-    override fun onAction(action: HomeAction, currentState: HomeState?) {
-        when (action) {
-            is HomeAction.LoadData -> loadData()
-            is HomeAction.Refresh -> refresh()
-        }
-    }
-    
-    private fun loadData() {
-        launchAction(key = "load") {  // 支持取消
-            apiRequest { apiService.getArticles() }
-                .collect { result ->
-                    result.onSuccess { data ->
-                        emitState(HomeState(articles = data.datas))
-                    }
-                }
-        }
-    }
-}
-```
-
-### Compose UI
-
-```kotlin
-@Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
-    val state by viewModel.state.collectAsState(initial = HomeState())
-    
-    LaunchedEffect(Unit) {
-        viewModel.sendAction(HomeAction.LoadData)
-    }
-    
-    when {
-        state.isLoading -> LoadingView()
-        state.error != null -> ErrorView(state.error!!)
-        else -> ArticleList(state.articles)
-    }
-}
-```
-
-## 🎯 架构图
-
-```
-┌──────────────┐
-│  Compose UI  │  ← 观察 State
-└──────┬───────┘
-       │ 发送 Action
-       ▼
-┌──────────────┐
-│  ViewModel   │  ← 处理逻辑
-│  (MVI)       │
-└──────┬───────┘
-       │ 网络请求
-       ▼
-┌──────────────┐
-│ Network API  │  ← Retrofit
-└──────────────┘
-```
-
-## 📚 详细文档
-
-- 📖 [完整 README](README.md)
-- 📖 [网络层文档](app/src/main/java/com/syf/wanandroidcompose/ui/network/README.md)
-- 💻 [使用示例](app/src/main/java/com/syf/wanandroidcompose/ui/network/example/)
-
-## 🔥 核心优势
-
-### BaseViewModel 优化
-
-| 特性 | 旧版 | 优化版 |
-|-----|------|--------|
-| Action 缓冲 | ❌ 0 | ✅ 64 |
-| 异常处理 | ❌ 会中断 | ✅ 自动捕获 |
-| 取消机制 | ❌ 无 | ✅ 按 key 取消 |
-| 日志支持 | ❌ 无 | ✅ 自动记录 |
-
-### 网络层特性
-
-- ✅ 自动 Loading/Success/Error 状态
-- ✅ 统一异常处理
-- ✅ 支持并发请求
-- ✅ 类型安全（Kotlinx Serialization）
-- ✅ Chucker 网络调试
-
-## 📝 开发计划
-
-- [x] MVI 架构搭建
-- [x] 网络层封装
-- [x] BaseViewModel 优化
-- [x] 首页界面
-- [ ] 用户登录
-- [ ] 文章收藏
-- [ ] 搜索功能
-- [ ] 完整的单元测试
-
-## ⭐ Star History
-
-如果这个项目对你有帮助，请给一个 Star！
+</div>
 
 ---
 
-**Made with ❤️ and Jetpack Compose**
+## 📖 项目简介
+
+**WanAndroid Compose** 是一款严格遵循 Google **Modern Android Development (MAD)** 规范构建的现代化 Android 应用。
+
+本项目致力于探索 **Jetpack Compose UI** 与 **MVI (Model-View-Intent)** 纯响应式架构的最佳实践。我们追求代码的**简洁性**、**单向数据流的可预测性**以及**极致的沉浸式体验**。
+
+> **"Code Less, Create More."**
+
+---
+
+## ✨ 核心亮点
+
+<table border="0">
+ <tr>
+    <td width="50%">
+        <h3>🎨 100% 纯 Compose UI</h3>
+        <p>彻底告别 XML。使用 Material Design 3 构建，支持动态主题、自适应布局与流畅的动画效果。</p>
+    </td>
+    <td width="50%">
+        <h3>🏗️ 严谨的 MVI 架构</h3>
+        <p>严格的单向数据流 (UDF)。Action 驱动 State 变化，逻辑清晰，易于调试和与测试。</p>
+    </td>
+ </tr>
+ <tr>
+    <td width="50%">
+        <h3>⚡ 自研高性能骨架屏</h3>
+        <p>移除厚重的第三方库，实现了轻量级、零依赖的 <code>Modifier.placeholder</code>，内置丝滑的 Shimmer 闪光效果。</p>
+    </td>
+    <td width="50%">
+        <h3>📱 沉浸式全屏导航</h3>
+        <p>重构的 Root NavHost 架构，使文章详情页能够完全覆盖底部导航栏，提供真正的全屏阅读体验。</p>
+    </td>
+ </tr>
+</table>
+
+---
+
+## 📱 功能预览
+
+| **首页 / 智能骨架屏** | **分类吸顶 / 切换** | **沉浸式详情页** |
+|:---:|:---:|:---:|
+| <img src="https://via.placeholder.com/200x400?text=Home+Skeleton" alt="Home Screen" width="200"/> | <img src="https://via.placeholder.com/200x400?text=Sticky+Tabs" alt="Tabs" width="200"/> | <img src="https://via.placeholder.com/200x400?text=Full+WebView" alt="Detail" width="200"/> |
+| *自研 Shimmer 加载效果* | *Sticky Header & Chip Tabs* | *覆盖 BottomBar 的全屏体验* |
+
+### 🔥 最新特性 (Update)
+
+-   **自定义骨架屏 (Custom Placeholder)**:
+    -   鉴于 Accompanist Placeholder 的废弃，我们在 `ui/common/Placeholder.kt` 中实现了自定义的修饰符。
+    -   支持自定义高亮颜色、动画时长，性能更优。
+-   **全屏导航架构 (Root Navigation)**:
+    -   为了解决详情页无法全屏的问题，我们将 `AppMainView` 重构为根级导航容器。
+    -   将主页面的 `Scaffold` (包含 BottomBar) 下沉至 `tabs` 路由，`detail` 路由提升至根级，实现了完美的层级覆盖。
+-   **文章详情 (Detail View)**:
+    -   集成了完善的 WebView，支持加载进度条、标题回传及返回键拦截处理。
+
+---
+
+## 🛠 技术架构
+
+### 技术栈
+
+*   **语言**: Kotlin (Coroutines, Flow)
+*   **UI**: Jetpack Compose (Material3)
+*   **导航**: Navigation Compose (支持根路由与嵌套路由)
+*   **网络**: Retrofit + OkHttp + Kotlinx Serialization
+*   **图片**: Coil Compose
+
+### MVI 架构数据流
+
+应用遵循严格的单向流动：
+
+```mermaid
+graph TD
+    User((用户交互))
+    
+    subgraph "UI Layer (视图层)"
+        Screen[Compose Screen]
+        Event[UI Event]
+    end
+    
+    subgraph "Presentation Layer (表现层)"
+        VM{ViewModel}
+        Action[Action]
+        State[UI State]
+        Effect[Side Effect]
+    end
+    
+    subgraph "Data Layer (数据层)"
+        Repo[Repository]
+        API[Remote Data Source]
+    end
+
+    User -->|点击/滑动| Event
+    Event -->|触发| Action
+    Action -->|分发至| VM
+    
+    VM -->|请求数据| Repo
+    Repo <-->|网络/数据库| API
+    Repo -->|返回结果| VM
+    
+    VM -->|Reduce 更新| State
+    VM -->|发射| Effect
+    
+    State -->|订阅并重组| Screen
+    Effect -->|一次性事件处理| Screen
+    
+    style User fill:#f9f,stroke:#333,stroke-width:2px
+    style Screen fill:#bbf,stroke:#333,stroke-width:2px
+    style VM fill:#fb7,stroke:#333,stroke-width:2px
+    style API fill:#afa,stroke:#333,stroke-width:2px
+```
+
+### 导航层级设计
+
+为了实现全屏详情页，采用了双层导航设计：
+
+```mermaid
+graph TD
+    Root[Root NavHost (AppMainView)]
+    
+    subgraph "Route: Tabs (主界面)"
+        MainTabs[MainTabsScreen]
+        Scaffold[Scaffold 骨架]
+        BottomBar[Bottom Navigation]
+        Home[Home Destination]
+        Project[Project Destination]
+        
+        MainTabs --> Scaffold
+        Scaffold --> BottomBar
+        Scaffold --> Home
+        Scaffold --> Project
+    end
+    
+    subgraph "Route: Detail (详情页)"
+        Detail[DetailView]
+    end
+    
+    Root -->|默认路由| MainTabs
+    Root -->|Navigate: detail/{url}| Detail
+    
+    Home -.->|调用根控制器跳转| Root
+    
+    style Root fill:#f96,stroke:#333
+    style Detail fill:#f9f,stroke:#333
+```
+
+---
+
+## 🚀 快速开始
+
+1.  **环境要求**:
+    *   Android Studio Ladybug 或更高版本。
+    *   JDK 17+。
+
+2.  **获取代码**:
+    ```bash
+    git clone https://github.com/your-username/WanAndroidCompose.git
+    cd WanAndroidCompose
+    ./gradlew app:installDebug
+    ```
+
+---
+
+<div align="center">
+
+**WanAndroid Compose** is maintained by **sunyufeng**.
+
+Made with ❤️ in China.
+
+</div>
