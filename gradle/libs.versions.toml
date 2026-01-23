@@ -90,7 +90,7 @@ hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.re
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 # 图片加载相关库
-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coilcompose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 # 数据库相关库
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
@@ -115,4 +115,7 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 # 数据库相关插件
+# 数据库相关插件
 room = { id = "androidx.room", version.ref = "room" }
+
+

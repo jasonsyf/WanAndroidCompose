@@ -1,15 +1,15 @@
-package com.syf.wanandroidcompose.ui.network.example
+package com.syf.wanandroidcompose.network.example
 
 import androidx.lifecycle.viewModelScope
-import com.syf.wanandroidcompose.ui.common.BaseViewModel
-import com.syf.wanandroidcompose.ui.common.Action
-import com.syf.wanandroidcompose.ui.common.State
-import com.syf.wanandroidcompose.ui.network.ApiResult
-import com.syf.wanandroidcompose.ui.network.ArticleData
-import com.syf.wanandroidcompose.ui.network.BannerData
-import com.syf.wanandroidcompose.ui.network.RetrofitClient
-import com.syf.wanandroidcompose.ui.network.WanAndroidApiService
-import com.syf.wanandroidcompose.ui.network.apiRequest
+import com.syf.wanandroidcompose.common.BaseViewModel
+import com.syf.wanandroidcompose.common.Action
+import com.syf.wanandroidcompose.common.State
+import com.syf.wanandroidcompose.network.ApiResult
+import com.syf.wanandroidcompose.home.ArticleData
+import com.syf.wanandroidcompose.home.BannerData
+import com.syf.wanandroidcompose.network.RetrofitClient
+import com.syf.wanandroidcompose.home.HomeApiService
+import com.syf.wanandroidcompose.network.apiRequest
 import kotlinx.coroutines.launch
 
 /**
@@ -41,7 +41,7 @@ data class ExampleState(
 class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
 
     // 创建 API 服务实例
-    private val apiService = RetrofitClient.create<WanAndroidApiService>()
+    private val apiService = RetrofitClient.create<HomeApiService>()
 
     override fun onAction(action: ExampleAction, currentState: ExampleState?) {
         when (action) {

@@ -83,7 +83,7 @@ dependencies {
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.okhttp.logging)
     implementation(libs.timber)
-
+    implementation(libs.coilcompose)
     // 通过OkHttp的拦截器机制
     // 实现在应用通知栏显示网络请求功能
     // https://github.com/ChuckerTeam/chucker
@@ -112,4 +112,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+
 }

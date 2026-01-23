@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.network
+package com.syf.wanandroidcompose.network
 
 /**
  * 通用的 API 请求结果封装，适用于 MVI 模式

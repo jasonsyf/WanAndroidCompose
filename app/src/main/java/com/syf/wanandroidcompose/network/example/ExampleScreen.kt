@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.network.example
+package com.syf.wanandroidcompose.network.example
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.syf.wanandroidcompose.ui.network.ArticleData
-import com.syf.wanandroidcompose.ui.network.BannerData
+import com.syf.wanandroidcompose.home.ArticleData
+import com.syf.wanandroidcompose.home.BannerData
 
 /**
  * 示例：如何在 Compose UI 中使用网络层
