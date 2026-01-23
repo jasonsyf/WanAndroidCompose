@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.common
+package com.syf.wanandroidcompose.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

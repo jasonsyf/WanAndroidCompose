@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.network
+package com.syf.wanandroidcompose.network
 
 import kotlinx.serialization.Serializable
 

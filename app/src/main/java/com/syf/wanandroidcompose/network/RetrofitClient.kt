@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.network
+package com.syf.wanandroidcompose.network
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.syf.wanandroidcompose.BuildConfig
@@ -101,7 +101,7 @@ object RetrofitClient {
      *
      * 使用示例：
      * ```
-     * val apiService = RetrofitClient.create<WanAndroidApiService>()
+     * val apiService = RetrofitClient.create<HomeApiService>()
      * ```
      */
     inline fun <reified T> create(): T = createService(T::class.java)

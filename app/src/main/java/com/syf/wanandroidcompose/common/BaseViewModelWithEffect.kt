@@ -1,4 +1,4 @@
-package com.syf.wanandroidcompose.ui.common
+package com.syf.wanandroidcompose.common
 
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
@@ -8,15 +8,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-interface Action
-interface State
-interface Effect
 
-abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
+
+abstract class BaseViewModelWithEffect<A : Action, S : State, E : Effect> : ViewModel(){
     /**
      * [event]包含用户与ui的交互（如点击操作），也有来自后台的消息（如切换自习模式）
      */
@@ -40,6 +40,11 @@ abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
     val replayState
         get() = _state.replayCache.firstOrNull()
 
+    /**
+     * [effect]事件带来的副作用，通常是一次性事件 例如：弹Toast、导航Fragment等
+     */
+    private val _effect = MutableSharedFlow<E>()
+    val effect: SharedFlow<E> by lazy { _effect.asSharedFlow() }
 
     /** 订阅事件的传入 onAction()分发处理事件 */
     init {
@@ -60,12 +65,19 @@ abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
         builder()?.let { _state.emit(it) }
     }
 
+    protected fun emitEffect(builder: suspend () -> E?) = viewModelScope.launch {
+        builder()?.let { _effect.emit(it) }
+    }
 
     protected suspend fun emitState(state: S) = _state.emit(state)
 
+    protected suspend fun emitEffect(effect: E) = _effect.emit(effect)
 
     /** 不挂起发送 state ，返回 boolean */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     fun tryEmitState(state: S) = _state.tryEmit(state)
 
+    /**不挂起发送 effect ，返回 ChannelResult */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    fun tryEmitEffect(effect: E) = _effect.tryEmit(effect)
 }

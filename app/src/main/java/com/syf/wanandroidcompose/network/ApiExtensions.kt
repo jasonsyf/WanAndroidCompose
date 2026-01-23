@@ -1,7 +1,7 @@
-package com.syf.wanandroidcompose.ui.network
+package com.syf.wanandroidcompose.network
 
-import com.syf.wanandroidcompose.ui.network.NetworkException.toErrorCode
-import com.syf.wanandroidcompose.ui.network.NetworkException.toErrorMessage
+import com.syf.wanandroidcompose.network.NetworkException.toErrorCode
+import com.syf.wanandroidcompose.network.NetworkException.toErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
