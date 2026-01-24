@@ -40,7 +40,7 @@
 ### 架构与设计模式
 - **MVI (Model-View-Intent)** - 可预测的状态管理
 - **Repository 模式** - 数据层抽象
-- **Use Case 模式** - 业务逻辑封装
+- **Use Case 模式** - 业务逻辑封装  //代办
 
 ### Jetpack 组件
 - **Compose** - 声明式 UI 框架
@@ -264,7 +264,7 @@ limitations under the License.
 ## 📮 联系方式
 
 - **作者**: 孙宇峰
-- **邮箱**: your.email@example.com
+- **邮箱**: jasonsunyf@gmail.com
 - **GitHub**: [@jasonsyf](https://github.com/jasonsyf)
 
 ## 🙏 致谢
