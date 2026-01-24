@@ -2,188 +2,279 @@
 
 <div align="center">
 
-![WanAndroid Compose Banner](docs/img/banner.png)
+![应用图标](/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Architecture](https://img.shields.io/badge/Architecture-MVI-orange?style=for-the-badge)](https://developer.android.com/topic/architecture)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+**基于 Jetpack Compose 构建的现代化 Android 学习平台**
 
-**极致体验 · 现代架构 · 纯粹 Compose**
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Compose-最新版-brightgreen.svg)](https://developer.android.com/jetpack/compose)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![API](https://img.shields.io/badge/API-24%2B-orange.svg)](https://android-arsenal.com/api?level=24)
 
-[✨ 核心亮点](#-核心亮点) • [📱 功能预览](#-功能预览) • [🛠 技术架构](#-技术架构) • [🚀 快速开始](#-快速开始)
+[English](README.md)
 
 </div>
 
----
+## ✨ 特性
 
-## 📖 项目简介
+- 🎨 **现代化 UI** - 完全使用 Jetpack Compose 构建
+- 🏗️ **MVI 架构** - 单向数据流与状态管理
+- 💾 **离线优先** - 使用 Room 数据库进行本地缓存
+- 🔄 **响应式编程** - Kotlin Flow 和协程
+- 🌐 **网络层** - Retrofit + OkHttp 自定义拦截器
+- 🎯 **类型安全** - Kotlin 序列化进行 JSON 解析
+- 📱 **Material Design 3** - 最新的 Material Design 组件
+- 🔧 **依赖注入** - 使用 Hilt 进行依赖注入
+- 🧪 **易于测试** - 为可测试性设计的架构
 
-**WanAndroid Compose** 是一款严格遵循 Google **Modern Android Development (MAD)** 规范构建的现代化 Android 应用。
+## 📸 应用截图
 
-本项目致力于探索 **Jetpack Compose UI** 与 **MVI (Model-View-Intent)** 纯响应式架构的最佳实践。我们追求代码的**简洁性**、**单向数据流的可预测性**以及**极致的沉浸式体验**。
+<div align="center">
+<img src="screenshots/home.png" width="250" />
+<img src="screenshots/article.png" width="250" />
+<img src="screenshots/profile.png" width="250" />
+</div>
 
-> **"Code Less, Create More."**
+## 🛠️ 技术栈
 
----
+### 架构与设计模式
+- **MVI (Model-View-Intent)** - 可预测的状态管理
+- **Repository 模式** - 数据层抽象
+- **Use Case 模式** - 业务逻辑封装
 
-## ✨ 核心亮点
+### Jetpack 组件
+- **Compose** - 声明式 UI 框架
+- **Navigation Compose** - 类型安全的导航
+- **Room** - 支持 Flow 的 SQLite 数据库
+- **Lifecycle** - 生命周期感知组件
+- **ViewModel** - UI 状态管理
+- **Hilt** - 依赖注入
 
-<table border="0">
- <tr>
-    <td width="50%">
-        <h3>🎨 100% 纯 Compose UI</h3>
-        <p>彻底告别 XML。使用 Material Design 3 构建，支持动态主题、自适应布局与流畅的动画效果。</p>
-    </td>
-    <td width="50%">
-        <h3>🏗️ 严谨的 MVI 架构</h3>
-        <p>严格的单向数据流 (UDF)。Action 驱动 State 变化，逻辑清晰，易于调试和与测试。</p>
-    </td>
- </tr>
- <tr>
-    <td width="50%">
-        <h3>⚡ 自研高性能骨架屏</h3>
-        <p>移除厚重的第三方库，实现了轻量级、零依赖的 <code>Modifier.placeholder</code>，内置丝滑的 Shimmer 闪光效果。</p>
-    </td>
-    <td width="50%">
-        <h3>📱 沉浸式全屏导航</h3>
-        <p>重构的 Root NavHost 架构，使文章详情页能够完全覆盖底部导航栏，提供真正的全屏阅读体验。</p>
-    </td>
- </tr>
-</table>
+### 网络与数据
+- **Retrofit** - REST API 客户端
+- **OkHttp** - HTTP 客户端与拦截器
+- **Kotlin Serialization** - JSON 序列化
+- **Coil** - 图片加载
 
----
+### 响应式编程
+- **Kotlin Coroutines** - 异步编程
+- **Flow** - 响应式数据流
+- **StateFlow 和 SharedFlow** - 状态管理
 
-## 📱 功能预览
+### 代码质量
+- **KSP** - Kotlin 符号处理
+- **Timber** - 日志工具
+- **Chucker** - 网络检查器（Debug 版本）
 
-| **首页 / 智能骨架屏** | **分类吸顶 / 切换** | **沉浸式详情页** |
-|:---:|:---:|:---:|
-| <img src="https://via.placeholder.com/200x400?text=Home+Skeleton" alt="Home Screen" width="200"/> | <img src="https://via.placeholder.com/200x400?text=Sticky+Tabs" alt="Tabs" width="200"/> | <img src="https://via.placeholder.com/200x400?text=Full+WebView" alt="Detail" width="200"/> |
-| *自研 Shimmer 加载效果* | *Sticky Header & Chip Tabs* | *覆盖 BottomBar 的全屏体验* |
+## 📦 项目结构
 
-### 🔥 最新特性 (Update)
-
--   **自定义骨架屏 (Custom Placeholder)**:
-    -   鉴于 Accompanist Placeholder 的废弃，我们在 `ui/common/Placeholder.kt` 中实现了自定义的修饰符。
-    -   支持自定义高亮颜色、动画时长，性能更优。
--   **全屏导航架构 (Root Navigation)**:
-    -   为了解决详情页无法全屏的问题，我们将 `AppMainView` 重构为根级导航容器。
-    -   将主页面的 `Scaffold` (包含 BottomBar) 下沉至 `tabs` 路由，`detail` 路由提升至根级，实现了完美的层级覆盖。
--   **文章详情 (Detail View)**:
-    -   集成了完善的 WebView，支持加载进度条、标题回传及返回键拦截处理。
-
----
-
-## 🛠 技术架构
-
-### 技术栈
-
-*   **语言**: Kotlin (Coroutines, Flow)
-*   **UI**: Jetpack Compose (Material3)
-*   **导航**: Navigation Compose (支持根路由与嵌套路由)
-*   **网络**: Retrofit + OkHttp + Kotlinx Serialization
-*   **图片**: Coil Compose
-
-### MVI 架构数据流
-
-应用遵循严格的单向流动：
-
-```mermaid
-graph TD
-    User((用户交互))
-    
-    subgraph "UI Layer (视图层)"
-        Screen[Compose Screen]
-        Event[UI Event]
-    end
-    
-    subgraph "Presentation Layer (表现层)"
-        VM{ViewModel}
-        Action[Action]
-        State[UI State]
-        Effect[Side Effect]
-    end
-    
-    subgraph "Data Layer (数据层)"
-        Repo[Repository]
-        API[Remote Data Source]
-    end
-
-    User -->|点击/滑动| Event
-    Event -->|触发| Action
-    Action -->|分发至| VM
-    
-    VM -->|请求数据| Repo
-    Repo <-->|网络/数据库| API
-    Repo -->|返回结果| VM
-    
-    VM -->|Reduce 更新| State
-    VM -->|发射| Effect
-    
-    State -->|订阅并重组| Screen
-    Effect -->|一次性事件处理| Screen
-    
-    style User fill:#f9f,stroke:#333,stroke-width:2px
-    style Screen fill:#bbf,stroke:#333,stroke-width:2px
-    style VM fill:#fb7,stroke:#333,stroke-width:2px
-    style API fill:#afa,stroke:#333,stroke-width:2px
+```
+WanAndroidCompose/
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/syf/wanandroidcompose/
+│   │   │   │   ├── common/          # 基础类和工具
+│   │   │   │   │   ├── BaseViewModel.kt
+│   │   │   │   │   └── BaseViewModelOptimized.kt
+│   │   │   │   ├── home/            # 首页功能模块
+│   │   │   │   │   ├── HomeView.kt  # Compose UI
+│   │   │   │   │   ├── HomeViewModel.kt
+│   │   │   │   │   ├── HomeRepository.kt
+│   │   │   │   │   ├── HomeAction.kt
+│   │   │   │   │   ├── local/       # Room 数据库
+│   │   │   │   │   └── HomeApiService.kt
+│   │   │   │   ├── network/         # 网络层
+│   │   │   │   │   ├── ApiService.kt
+│   │   │   │   │   ├── Result.kt    # 网络请求结果包装
+│   │   │   │   │   └── ApiExtensions.kt
+│   │   │   │   ├── utils/           # 工具类
+│   │   │   │   └── WanAndroidApplication.kt
+│   │   │   └── res/                 # 资源文件
+│   │   └── test/                    # 单元测试
+│   └── build.gradle.kts
+├── gradle/
+├── build.gradle.kts
+└── settings.gradle.kts
 ```
 
-### 导航层级设计
+## 🚀 开始使用
 
-为了实现全屏详情页，采用了双层导航设计：
+### 环境要求
 
-```mermaid
-graph TD
-    Root[Root NavHost (AppMainView)]
-    
-    subgraph "Route: Tabs (主界面)"
-        MainTabs[MainTabsScreen]
-        Scaffold[Scaffold 骨架]
-        BottomBar[Bottom Navigation]
-        Home[Home Destination]
-        Project[Project Destination]
-        
-        MainTabs --> Scaffold
-        Scaffold --> BottomBar
-        Scaffold --> Home
-        Scaffold --> Project
-    end
-    
-    subgraph "Route: Detail (详情页)"
-        Detail[DetailView]
-    end
-    
-    Root -->|默认路由| MainTabs
-    Root -->|Navigate: detail/{url}| Detail
-    
-    Home -.->|调用根控制器跳转| Root
-    
-    style Root fill:#f96,stroke:#333
-    style Detail fill:#f9f,stroke:#333
+- Android Studio Hedgehog | 2023.1.1 或更高版本
+- JDK 11 或更高版本
+- Android SDK API 24+
+- Gradle 8.5+
+
+### 构建项目
+
+1. **克隆仓库**
+   ```bash
+   git clone https://github.com/yourusername/WanAndroidCompose.git
+   cd WanAndroidCompose
+   ```
+
+2. **在 Android Studio 中打开**
+   - 打开 Android Studio
+   - 选择 "Open an Existing Project"
+   - 导航到克隆的目录
+
+3. **同步 Gradle**
+   - Android Studio 会自动同步 Gradle 文件
+   - 等待依赖下载完成
+
+4. **运行应用**
+   ```bash
+   ./gradlew assembleDebug
+   # 或在 Android Studio 中点击 "Run" 按钮
+   ```
+
+### 签名配置（可选）
+
+对于 Release 构建，在 `local.properties` 中配置签名：
+
+```properties
+KEYSTORE_FILE=/path/to/your/keystore.jks
+KEYSTORE_PASSWORD=your_store_password
+KEY_ALIAS=your_key_alias
+KEY_PASSWORD=your_key_password
 ```
 
----
+## 📱 功能实现
 
-## 🚀 快速开始
+### 首页
+- ✅ 文章列表与分页加载
+- ✅ 下拉刷新功能
+- ✅ 轮播图及自动滚动
+- ✅ 公众号专区
+- ✅ Room 离线缓存
+- ✅ Shimmer 加载效果
+- ✅ Snackbar 错误处理
 
-1.  **环境要求**:
-    *   Android Studio Ladybug 或更高版本。
-    *   JDK 17+。
+### 网络层
+- ✅ 通用 `Result` 包装器处理 API 响应
+- ✅ 自动处理加载、成功和错误状态
+- ✅ 基于 Flow 的响应式数据流
+- ✅ 网络可用性检测
+- ✅ 自定义错误处理
 
-2.  **获取代码**:
-    ```bash
-    git clone https://github.com/your-username/WanAndroidCompose.git
-    cd WanAndroidCompose
-    ./gradlew app:installDebug
-    ```
+### 状态管理
+- ✅ 使用密封类的 MVI 模式
+- ✅ 单向数据流
+- ✅ StateFlow 管理 UI 状态
+- ✅ 不可变状态对象
+- ✅ 集中式状态更新
+
+## 🎯 核心亮点
+
+### 优化的 Base ViewModel
+自定义 `BaseViewModelOptimized` 包含：
+- 协程异常处理
+- 自动状态重放
+- 基于 Action 的事件系统
+- 网络操作跟踪
+- 内置日志记录
+
+### 基于 Flow 的 Repository
+Repository 发射 `Flow<Result<T>>` 提供：
+- 自动加载状态
+- 一致的错误处理
+- 易于组合
+- 生命周期感知
+
+### 本地优先架构
+- Room 数据库支持离线
+- 单一数据源原则
+- 网络 + 缓存策略
+- 通过 Flow 自动更新 UI
+
+## 📝 代码示例
+
+### 发起网络请求
+
+```kotlin
+// Repository
+fun fetchArticles(): Flow<Result<List<ArticleData>>> = flow {
+    emit(Result.Loading)
+    try {
+        val response = apiService.getArticleList(page = 0)
+        if (response.isSuccess && response.data != null) {
+            // 更新本地缓存
+            database.insertArticles(response.data.datas)
+            emit(Result.Success(response.data.datas))
+        } else {
+            emit(Result.apiError(response))
+        }
+    } catch (e: Exception) {
+        emit(Result.fromException(e, "获取文章失败"))
+    }
+}
+
+// ViewModel
+viewModelScope.launch {
+    repository.fetchArticles().collect { result ->
+        when (result) {
+            is Result.Loading -> updateState { copy(isLoading = true) }
+            is Result.Success -> updateState { copy(isLoading = false, articles = result.data) }
+            is Result.Error -> updateState { copy(isLoading = false, error = result.message) }
+        }
+    }
+}
+```
+
+## 🧪 测试
+
+```bash
+# 运行单元测试
+./gradlew test
+
+# 运行仪器化测试
+./gradlew connectedAndroidTest
+```
+
+## 📄 开源协议
+
+```
+Copyright 2024 Sun Yufeng
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+## 🤝 贡献
+
+欢迎贡献！请随时提交 Pull Request。
+
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
+
+## 📮 联系方式
+
+- **作者**: 孙宇峰
+- **邮箱**: your.email@example.com
+- **GitHub**: [@jasonsyf](https://github.com/jasonsyf)
+
+## 🙏 致谢
+
+- [WanAndroid API](https://www.wanandroid.com/blog/show/2) - 免费开放的 API
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) - 现代化 Android UI 工具包
+- [Material Design 3](https://m3.material.io/) - 设计系统
 
 ---
 
 <div align="center">
-
-**WanAndroid Compose** is maintained by **sunyufeng**.
-
-Made with ❤️ in China.
-
+用 ❤️ 和 Jetpack Compose 制作
 </div>
