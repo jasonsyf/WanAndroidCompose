@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.syf.wanandroidcompose.common.BaseViewModel
 import com.syf.wanandroidcompose.common.Action
 import com.syf.wanandroidcompose.common.State
-import com.syf.wanandroidcompose.network.ApiResult
+import com.syf.wanandroidcompose.network.Result
 import com.syf.wanandroidcompose.home.ArticleData
 import com.syf.wanandroidcompose.home.BannerData
 import com.syf.wanandroidcompose.network.RetrofitClient
@@ -77,10 +77,10 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
             apiRequest { apiService.getBanner() }
                 .collect { result ->
                     when (result) {
-                        is ApiResult.Loading -> {
+                        is Result.Loading -> {
                             emitState(replayState?.copy(isLoading = true) ?: ExampleState(isLoading = true))
                         }
-                        is ApiResult.Success -> {
+                        is Result.Success -> {
                             emitState(
                                 replayState?.copy(
                                     isLoading = false,
@@ -89,7 +89,7 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
                                 ) ?: ExampleState(banners = result.data)
                             )
                         }
-                        is ApiResult.Error -> {
+                        is Result.Error -> {
                             emitState(
                                 replayState?.copy(
                                     isLoading = false,
@@ -151,7 +151,7 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
             
             apiRequest { apiService.getArticleList(0) }
                 .collect { result ->
-                    if (result is ApiResult.Success) {
+                    if (result is Result.Success) {
                         emitState(
                             ExampleState(
                                 isLoading = false,
@@ -161,7 +161,7 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
                                 error = null
                             )
                         )
-                    } else if (result is ApiResult.Error) {
+                    } else if (result is Result.Error) {
                         emitState(replayState?.copy(isLoading = false, error = result.message) ?: ExampleState())
                     }
                 }
@@ -206,7 +206,7 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
     private suspend fun loadBannerInternal() {
         apiRequest { apiService.getBanner() }
             .collect { result ->
-                if (result is ApiResult.Success) {
+                if (result is Result.Success) {
                     emitState(replayState?.copy(banners = result.data) ?: ExampleState(banners = result.data))
                 }
             }
@@ -215,7 +215,7 @@ class ExampleViewModel : BaseViewModel<ExampleAction, ExampleState>() {
     private suspend fun loadArticlesInternal() {
         apiRequest { apiService.getArticleList(0) }
             .collect { result ->
-                if (result is ApiResult.Success) {
+                if (result is Result.Success) {
                     emitState(
                         replayState?.copy(
                             isLoading = false,

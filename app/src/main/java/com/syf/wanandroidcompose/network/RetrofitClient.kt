@@ -23,17 +23,17 @@ object RetrofitClient {
     /**
      * 连接超时时间（秒）
      */
-    private const val CONNECT_TIMEOUT = 30L
+    private const val CONNECT_TIMEOUT = 10L
 
     /**
      * 读取超时时间（秒）
      */
-    private const val READ_TIMEOUT = 30L
+    private const val READ_TIMEOUT = 10L
 
     /**
      * 写入超时时间（秒）
      */
-    private const val WRITE_TIMEOUT = 30L
+    private const val WRITE_TIMEOUT = 10L
 
     /**
      * JSON 配置

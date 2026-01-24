@@ -1,12 +1,23 @@
 package com.syf.wanandroidcompose.home
 
+import android.app.Application
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.syf.wanandroidcompose.WanAndroidApplication
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
+import com.syf.wanandroidcompose.network.Result
 import com.syf.wanandroidcompose.network.RetrofitClient
-import kotlinx.coroutines.async
+import com.syf.wanandroidcompose.utils.NetworkUtils
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 
-class HomeViewModel : BaseViewModelOptimized<HomeAction, HomeListState>() {
-
-    private val apiService by lazy { RetrofitClient.create<HomeApiService>() }
+class HomeViewModel(private val repository: HomeRepository, private val application: Application) :
+    BaseViewModelOptimized<HomeAction, HomeListState>() {
 
     private var currentPage = 0
 
@@ -14,27 +25,73 @@ class HomeViewModel : BaseViewModelOptimized<HomeAction, HomeListState>() {
     private val allArticles = mutableListOf<ArticleData>()
 
     init {
+        // 观察本地数据库数据
+        viewModelScope.launch {
+            repository.articles.collectLatest { articles ->
+                allArticles.clear()
+                allArticles.addAll(articles)
+                updateStateWithArticles(articles)
+            }
+        }
+        viewModelScope.launch {
+            repository.banners.collectLatest { banners ->
+                emitState {
+                    replayState?.copy(getBannerData = banners)
+                        ?: HomeListState(getBannerData = banners)
+                }
+            }
+        }
+        viewModelScope.launch {
+            repository.weChatAccounts.collectLatest { accounts ->
+                emitState {
+                    replayState?.copy(getPublicData = accounts)
+                        ?: HomeListState(getPublicData = accounts)
+                }
+            }
+        }
         // 初始加载
         refreshAllData(isFirstLoad = true)
     }
 
-    override fun onAction(action: HomeAction, currentState: HomeListState?) {
-        when (action) {
-            is HomeAction.LoadTab -> loadTab()
-            is HomeAction.ClickArticle -> toDetail(action.articleId)
-            is HomeAction.ClickUser -> loadUserArticle(action.userId)
-            is HomeAction.LoadArticleData -> loadArticleData()
-            is HomeAction.LoadMoreArticle -> loadMoreArticle()
-            is HomeAction.LoadPagerData -> loadPagerData()
-            is HomeAction.LoadPublic -> loadPublic()
-            is HomeAction.RefreshAllData -> refreshAllData(isFirstLoad = false)
-            is HomeAction.SelectCategory -> selectCategory(action.categoryId)
-            is HomeAction.DetailNavigated ->
-                    emitState { replayState?.copy(navigateToDetail = null) }
+    private fun updateStateWithArticles(articles: List<ArticleData>) {
+        emitState {
+            val categories = extractCategories(articles)
+            // 应用当前筛选
+            val currentSelectedId = replayState?.selectedCategoryId ?: 0
+            val filteredList = filterArticles(articles, currentSelectedId)
+
+            replayState?.copy(getArticleData = filteredList, categories = categories)
+                ?: HomeListState(getArticleData = filteredList, categories = categories)
         }
     }
 
-    private fun loadTab() {}
+    override fun onAction(action: HomeAction, currentState: HomeListState?) {
+        when (action) {
+            is HomeAction.ClickArticle -> toDetail(action.articleId)
+            is HomeAction.ClickUser -> loadUserArticle(action.userId)
+            is HomeAction.RefreshAllData -> refreshAllData(isFirstLoad = false)
+            is HomeAction.LoadMoreArticle -> loadMoreArticle()
+            is HomeAction.SelectCategory -> selectCategory(action.categoryId)
+            is HomeAction.DetailNavigated ->
+                emitState { replayState?.copy(navigateToDetail = null) }
+            // Obsolete actions - data now loads automatically via Flow
+            is HomeAction.LoadPagerData -> {
+                /* Handled by Flow */
+            }
+
+            is HomeAction.LoadPublic -> {
+                /* Handled by Flow */
+            }
+
+            is HomeAction.LoadArticleData -> {
+                /* Handled by Flow */
+            }
+
+            is HomeAction.LoadTab -> {
+                /* Handled by Flow */
+            }
+        }
+    }
 
     private fun tcDetail(articleId: String) {
         emitState { replayState?.copy(navigateToDetail = articleId) }
@@ -74,155 +131,165 @@ class HomeViewModel : BaseViewModelOptimized<HomeAction, HomeListState>() {
 
         // 提取不重复的 superChapterName 和 superChapterId
         val seenIds = mutableSetOf<Int>()
-        val list =
-                articles
-                        .distinctBy { it.superChapterId }
-                        .map { CategoryUiModel(it.superChapterName, it.superChapterId) }
-                        .toMutableList()
-        categories.addAll(list)
-        //        articles.forEach { article ->
-        //            val id = article.superChapterId
-        //            if (id != 0 && !seenIds.contains(id) && article.superChapterName.isNotEmpty())
-        // {
-        //                categories.add(CategoryUiModel(article.superChapterName, id))
-        //                seenIds.add(id)
-        //            }
-        //        }
+//        val list =
+//                articles
+//                        .distinctBy { it.superChapterId }
+//                        .map { CategoryUiModel(it.superChapterName, it.superChapterId) }
+//                        .toMutableList()
+//        categories.addAll(list)
+        articles.forEach { article ->
+            val id = article.superChapterId
+            if (id != 0 && !seenIds.contains(id) && article.superChapterName.isNotEmpty()) {
+                categories.add(CategoryUiModel(article.superChapterName, id))
+                seenIds.add(id)
+            }
+        }
         return categories
     }
 
     private fun loadMoreArticle() {
+        // Check network availability
+        if (!NetworkUtils.isNetworkAvailable(application)) {
+            emitState { replayState?.copy(isLoadingMore = false, errorMsg = "网络不可用，请检查网络连接") }
+            return
+        }
+
         val currentState = replayState ?: return
         if (currentState.isLoadingMore || !currentState.hasMore) return
 
-        emitState { currentState.copy(isLoadingMore = true) }
+        currentPage++
 
         launchAction("LoadMoreArticle") {
-            try {
-                val nextPage = currentPage + 1
-                val response = apiService.getArticleList(nextPage)
-                val data = response.data
-                if (response.errorCode == 0 && data != null) {
-                    currentPage = nextPage
-
-                    // 更新总数据源
-                    allArticles.addAll(data.datas)
-
+            repository
+                .fetchMoreArticles(currentPage)
+                .onStart {
                     emitState {
-                        val currentCategories = extractCategories(allArticles)
-                        // 应用当前筛选
-                        val currentSelectedId = replayState?.selectedCategoryId ?: 0
-                        val filteredList = filterArticles(allArticles, currentSelectedId)
-
-                        replayState?.copy(
-                                getArticleData = filteredList,
-                                categories = currentCategories,
-                                isLoadingMore = false,
-                                hasMore = !data.over
-                        )
-                    }
-                } else {
-                    emitState {
-                        replayState?.copy(isLoadingMore = false, errorMsg = response.errorMsg)
+                        replayState?.copy(isLoadingMore = true, errorMsg = null)
+                            ?: HomeListState(isLoadingMore = true)
                     }
                 }
-            } catch (e: Exception) {
-                emitState { replayState?.copy(isLoadingMore = false, errorMsg = e.message) }
-            }
-        }
-    }
+                .collect { result ->
+                    when (result) {
+                        is Result.Loading -> {
+                            // Already handled in onStart
+                        }
 
-    private fun loadPagerData() {
-        launchAction("LoadBanner") {
-            try {
-                val response = apiService.getBanner()
-                val data = response.data
-                if (response.errorCode == 0 && data != null) {
-                    emitState {
-                        replayState?.copy(getBannerData = data)
-                                ?: HomeListState(getBannerData = data)
+                        is Result.Success -> {
+                            // Data is automatically updated via Flow from local DB
+                            emitState {
+                                replayState?.copy(
+                                    isLoadingMore = false,
+                                    hasMore = !result.data.over,
+                                    errorMsg = null
+                                ) ?: HomeListState()
+                            }
+                        }
+
+                        is Result.Error -> {
+                            currentPage-- // Rollback page on error
+                            emitState {
+                                replayState?.copy(
+                                    isLoadingMore = false,
+                                    errorMsg = result.message
+                                ) ?: HomeListState()
+                            }
+                        }
                     }
                 }
-            } catch (e: Exception) {
-                // Ignore
-            }
-        }
-    }
-
-    private fun loadPublic() {
-        launchAction("LoadPublic") {
-            try {
-                val response = apiService.getWeChatAccounts()
-                val data = response.data
-                if (response.errorCode == 0 && data != null) {
-                    emitState {
-                        replayState?.copy(getPublicData = data)
-                                ?: HomeListState(getPublicData = data)
-                    }
-                }
-            } catch (e: Exception) {
-                // Ignore
-            }
         }
     }
 
     private fun refreshAllData(isFirstLoad: Boolean) {
-        // 重置分页和数据源
+        // Check network availability
+        if (!NetworkUtils.isNetworkAvailable(application)) {
+            emitState {
+                val currentState = replayState ?: HomeListState()
+                currentState.copy(
+                    isLoading = false,
+                    isRefreshing = false,
+                    errorMsg = "网络不可用，请检查网络连接"
+                )
+            }
+            return
+        }
+
+        // Reset pagination
         currentPage = 0
         allArticles.clear()
 
-        emitState {
-            // 重置选中状态为“全部”
-            val defaultState = HomeListState(selectedCategoryId = 0)
-
-            if (isFirstLoad) {
-                replayState?.copy(isLoading = true, selectedCategoryId = 0)
-                        ?: defaultState.copy(isLoading = true)
-            } else {
-                replayState?.copy(isRefreshing = true, hasMore = true, selectedCategoryId = 0)
-                        ?: defaultState.copy(isRefreshing = true)
-            }
-        }
-
         launchAction("RefreshFinish") {
-            try {
-                val bannerDeferred = async { apiService.getBanner() }
-                val articleDeferred = async { apiService.getArticleList(0) }
-                val publicDeferred = async { apiService.getWeChatAccounts() }
-
-                val bannerRes = bannerDeferred.await()
-                val articleRes = articleDeferred.await()
-                val publicRes = publicDeferred.await()
-
-                emitState {
-                    var state = replayState ?: HomeListState()
-                    val bannerData = bannerRes.data
-                    if (bannerRes.errorCode == 0 && bannerData != null) {
-                        state = state.copy(getBannerData = bannerData)
+            // Combine all three network requests into a single Flow
+            combine(
+                repository.fetchBanners(),
+                repository.fetchArticles(),
+                repository.fetchWeChatAccounts()
+            ) { bannerResult, articleResult, accountResult ->
+                Triple(bannerResult, articleResult, accountResult)
+            }
+                .onStart {
+                    // Emit loading state at the beginning
+                    emitState {
+                        val defaultState = HomeListState(selectedCategoryId = 0)
+                        if (isFirstLoad) {
+                            replayState?.copy(
+                                isLoading = true,
+                                selectedCategoryId = 0,
+                                errorMsg = null
+                            ) ?: defaultState.copy(isLoading = true)
+                        } else {
+                            replayState?.copy(
+                                isRefreshing = true,
+                                hasMore = true,
+                                selectedCategoryId = 0,
+                                errorMsg = null
+                            ) ?: defaultState.copy(isRefreshing = true, errorMsg = null)
+                        }
                     }
-                    val articleData = articleRes.data
-                    if (articleRes.errorCode == 0 && articleData != null) {
-                        allArticles.addAll(articleData.datas)
-                        val categories = extractCategories(allArticles)
-                        // 刷新后默认显示全部，不需要过滤，直接用 allArticles
-                        state =
+                }
+                .collect { (bannerResult, articleResult, accountResult) ->
+                    // Determine if any request is still loading
+                    val isLoading =
+                        listOf(bannerResult, articleResult, accountResult)
+                            .any { it is Result.Loading }
+
+                    // Collect error messages
+                    val errors =
+                        listOf(bannerResult, articleResult, accountResult)
+                            .filterIsInstance<Result.Error>()
+                            .map { it.message }
+
+                    emitState {
+                        var state = replayState ?: HomeListState()
+
+                        // Handle article result状态更新
+                        if (articleResult is Result.Success) {
+                            state =
                                 state.copy(
-                                        getArticleData = ArrayList(allArticles), // Copy list
-                                        categories = categories,
-                                        hasMore = !articleData.over,
-                                        selectedCategoryId = 0
-                                )
+                                    hasMore = !articleResult.data.over,
+                                    selectedCategoryId = 0)
+                        }
+
+                        // Update loading states and error message
+                        state.copy(
+                            isLoading = if (isFirstLoad) isLoading else false,
+                            isRefreshing = if (!isFirstLoad) isLoading else false,
+                            errorMsg = errors.firstOrNull() // Show first error if any
+                        )
                     }
-                    val publicData = publicRes.data
-                    if (publicRes.errorCode == 0 && publicData != null) {
-                        state = state.copy(getPublicData = publicData)
-                    }
-                    state.copy(isLoading = false, isRefreshing = false)
                 }
-            } catch (e: Exception) {
-                emitState {
-                    replayState?.copy(isLoading = false, isRefreshing = false, errorMsg = e.message)
-                }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[APPLICATION_KEY] as WanAndroidApplication)
+                val repository =
+                    HomeRepository(
+                        RetrofitClient.create<HomeApiService>(),
+                        application.database.homeDao()
+                    )
+                HomeViewModel(repository, application)
             }
         }
     }

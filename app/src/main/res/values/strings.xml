@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">WanAndroidCompose</string>
+    <string name="app_name">玩Android-Compose</string>
     <string name="title_activity_main">MainActivity</string>
-    <string name="title_activity_test">TestActivity</string>
 </resources>

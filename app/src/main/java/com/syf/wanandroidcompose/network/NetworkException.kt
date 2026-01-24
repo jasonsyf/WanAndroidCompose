@@ -9,7 +9,7 @@ import java.net.UnknownHostException
 /**
  * 网络异常处理工具
  */
-object NetworkException {
+object  NetworkException {
     
     /**
      * 异常错误码

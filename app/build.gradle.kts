@@ -1,12 +1,17 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-//    alias(libs.plugins.room)
-//    alias(libs.plugins.ksp)
-//    alias(libs.plugins.hilt)
+    alias(libs.plugins.room)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
+
 
 android {
     namespace = "com.syf.wanandroidcompose"
@@ -14,6 +19,22 @@ android {
         version = release(36)
     }
 
+    signingConfigs {
+        create("release") {
+//            // TODO: 请修改以下配置为您的实际签名信息
+//            storeFile = file("path/to/your/keystore.jks")  // 密钥库文件路径
+//            storePassword = "your_store_password"          // 密钥库密码
+//            keyAlias = "your_key_alias"                    // 密钥别名
+//            keyPassword = "your_key_password"              // 密钥密码
+//
+            // 推荐做法：使用环境变量或 local.properties 存储敏感信息
+            // 示例：
+            storeFile = file(project.findProperty("KEYSTORE_FILE").toString())
+            storePassword = project.findProperty("KEYSTORE_PASSWORD").toString()
+            keyAlias = project.findProperty("KEY_ALIAS").toString()
+            keyPassword = project.findProperty("KEY_PASSWORD").toString()
+        }
+    }
     defaultConfig {
         applicationId = "com.syf.wanandroidcompose"
         minSdk = 24
@@ -39,7 +60,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -61,9 +82,20 @@ android {
     }
 }
 
-//room {
-//    schemaDirectory("$projectDir/schemas")
-//}
+android.applicationVariants.all {
+    outputs.all {
+        val buildTypeName = buildType.name.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase() else it.toString()
+        }
+        val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+        (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+            "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
+    }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -96,16 +128,16 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     // Room 数据库支持
-//    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.runtime)
     // 使用 KSP 插件
-//    ksp(libs.androidx.room.compiler)
-//    kspAndroidTest(libs.hilt.compiler)
-//    kspAndroidTest(libs.hilt.android)
+    ksp(libs.androidx.room.compiler)
+    kspAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.hilt.android)
     // Kotlin 协程支持
-//    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.ktx)
     // Paging 3 集成支持
-//    implementation(libs.androidx.room.paging)
-//    compileOnly(libs.ksp.gradlePlugin)
+    implementation(libs.androidx.room.paging)
+    compileOnly(libs.ksp.gradlePlugin)
     //测试
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
