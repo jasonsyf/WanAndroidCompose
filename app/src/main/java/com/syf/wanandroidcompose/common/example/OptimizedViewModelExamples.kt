@@ -3,19 +3,17 @@ package com.syf.wanandroidcompose.common.example
 import androidx.lifecycle.viewModelScope
 import com.syf.wanandroidcompose.common.Action
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
-import com.syf.wanandroidcompose.common.Effect
 import com.syf.wanandroidcompose.common.BaseViewModelWithEffectOptimized
+import com.syf.wanandroidcompose.common.Effect
 import com.syf.wanandroidcompose.common.State
-import com.syf.wanandroidcompose.network.RetrofitClient
 import com.syf.wanandroidcompose.home.HomeApiService
+import com.syf.wanandroidcompose.network.RetrofitClient
 import com.syf.wanandroidcompose.network.apiRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * 优化版 BaseViewModel 使用示例
- */
+/** 优化版 BaseViewModel 使用示例 */
 
 // ==================== 示例 1：基本使用 ====================
 
@@ -25,9 +23,9 @@ sealed class SearchAction : Action {
 }
 
 data class SearchState(
-    val query: String = "",
-    val results: List<String> = emptyList(),
-    val isLoading: Boolean = false
+        val query: String = "",
+        val results: List<String> = emptyList(),
+        val isLoading: Boolean = false
 ) : State
 
 class SearchViewModel : BaseViewModelOptimized<SearchAction, SearchState>() {
@@ -41,7 +39,7 @@ class SearchViewModel : BaseViewModelOptimized<SearchAction, SearchState>() {
 
     /**
      * 示例：使用 launchAction 实现防抖搜索
-     * 
+     *
      * 相同 key 的 Action 会取消之前的，避免重复请求
      */
     private fun searchWithDebounce(query: String) {
@@ -49,18 +47,18 @@ class SearchViewModel : BaseViewModelOptimized<SearchAction, SearchState>() {
         launchAction(key = "search") {
             // 防抖延迟
             delay(300)
-            
+
             emitState(replayState?.copy(isLoading = true) ?: SearchState(isLoading = true))
-            
+
             // 模拟网络请求
             delay(1000)
-            
+
             emitState(
-                SearchState(
-                    query = query,
-                    results = listOf("结果1: $query", "结果2: $query", "结果3: $query"),
-                    isLoading = false
-                )
+                    SearchState(
+                            query = query,
+                            results = listOf("结果1: $query", "结果2: $query", "结果3: $query"),
+                            isLoading = false
+                    )
             )
         }
     }
@@ -68,10 +66,8 @@ class SearchViewModel : BaseViewModelOptimized<SearchAction, SearchState>() {
     private fun clearSearch() {
         // 取消正在进行的搜索
         cancelAction("search")
-        
-        emitState {
-            SearchState()
-        }
+
+        emitState { SearchState() }
     }
 }
 
@@ -83,9 +79,9 @@ sealed class NetworkAction : Action {
 }
 
 data class NetworkState(
-    val data: String? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null
+        val data: String? = null,
+        val isLoading: Boolean = false,
+        val error: String? = null
 ) : State
 
 class NetworkViewModel : BaseViewModelOptimized<NetworkAction, NetworkState>() {
@@ -102,10 +98,9 @@ class NetworkViewModel : BaseViewModelOptimized<NetworkAction, NetworkState>() {
     private fun loadData() {
         viewModelScope.launch {
             emitState(NetworkState(isLoading = true))
-            
-            apiRequest { apiService.getBanner() }
-                .collect { result ->
-                    result
+
+            apiRequest { apiService.getBanner() }.collect { result ->
+                result
                         .onSuccess { data ->
                             emitState(NetworkState(data = "成功加载 ${data.size} 条数据"))
                         }
@@ -113,18 +108,14 @@ class NetworkViewModel : BaseViewModelOptimized<NetworkAction, NetworkState>() {
                             // 错误会被 handleException 捕获
                             emitState(NetworkState(error = message))
                         }
-                }
+            }
         }
     }
 
-    /**
-     * 重写异常处理方法
-     */
-    override fun handleException(exception: Exception, action: NetworkAction) {
+    /** 重写异常处理方法 */
+    override fun handleException(exception: Exception, action: NetworkAction?) {
         // 自定义异常处理逻辑
-        emitState {
-            NetworkState(error = "发生错误: ${exception.message}")
-        }
+        emitState { NetworkState(error = "发生错误: ${exception.message}") }
     }
 }
 
@@ -136,9 +127,9 @@ sealed class LoginAction : Action {
 }
 
 data class LoginState(
-    val isLoggedIn: Boolean = false,
-    val username: String? = null,
-    val isLoading: Boolean = false
+        val isLoggedIn: Boolean = false,
+        val username: String? = null,
+        val isLoading: Boolean = false
 ) : State
 
 sealed class LoginEffect : Effect {
@@ -159,10 +150,10 @@ class LoginViewModel : BaseViewModelWithEffectOptimized<LoginAction, LoginState,
     private fun login(username: String, password: String) {
         launchAction {
             emitState(LoginState(isLoading = true))
-            
+
             // 模拟网络请求
             delay(1000)
-            
+
             if (username.isNotEmpty() && password.isNotEmpty()) {
                 // 登录成功
                 emitState(LoginState(isLoggedIn = true, username = username))
@@ -177,15 +168,9 @@ class LoginViewModel : BaseViewModelWithEffectOptimized<LoginAction, LoginState,
     }
 
     private fun logout() {
-        emitState {
-            LoginState()
-        }
-        emitEffect {
-            LoginEffect.ShowToast("已退出登录")
-        }
-        emitEffect {
-            LoginEffect.NavigateToLogin
-        }
+        emitState { LoginState() }
+        emitEffect { LoginEffect.ShowToast("已退出登录") }
+        emitEffect { LoginEffect.NavigateToLogin }
     }
 }
 

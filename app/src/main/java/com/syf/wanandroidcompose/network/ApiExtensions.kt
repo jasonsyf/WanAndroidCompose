@@ -16,7 +16,7 @@ import timber.log.Timber
  */
 
 /**
- * 发起网络请求并返回 Flow<ApiResult<T>>
+ * 发起网络请求并返回 Flow<Result<T>>
  * 适用于 MVI 架构中的 ViewModel
  *
  * 使用示例：
@@ -28,19 +28,19 @@ import timber.log.Timber
  * ```
  *
  * @param request 网络请求的 suspend 函数
- * @return Flow<ApiResult<T>>
+ * @return Flow<Result<T>>
  */
 fun <T> apiRequest(
     request: suspend () -> ApiResponse<T>
-): Flow<ApiResult<T>> = flow {
+): Flow<Result<T>> = flow {
     try {
         val response = request()
-        val result = response.toApiResult()
+        val result = response.toResult()
         emit(result)
     } catch (e: Exception) {
         Timber.e(e, "API request failed")
         emit(
-            ApiResult.Error(
+            Result.Error(
                 exception = e,
                 message = e.toErrorMessage(),
                 code = e.toErrorCode()
@@ -49,12 +49,12 @@ fun <T> apiRequest(
     }
 }.onStart {
     // 发起请求前先发送 Loading 状态
-    emit(ApiResult.Loading)
+    emit(Result.Loading)
 }.catch { e ->
     // 捕获异常并转换为 Error 状态
     Timber.e(e, "Flow error")
     emit(
-        ApiResult.Error(
+        Result.Error(
             exception = e,
             message = e.toErrorMessage(),
             code = e.toErrorCode()
@@ -67,19 +67,19 @@ fun <T> apiRequest(
  * 适用于需要手动控制 Loading 状态的场景
  *
  * @param request 网络请求的 suspend 函数
- * @return Flow<ApiResult<T>>
+ * @return Flow<Result<T>>
  */
 fun <T> apiRequestWithoutLoading(
     request: suspend () -> ApiResponse<T>
-): Flow<ApiResult<T>> = flow {
+): Flow<Result<T>> = flow {
     try {
         val response = request()
-        val result = response.toApiResult()
+        val result = response.toResult()
         emit(result)
     } catch (e: Exception) {
         Timber.e(e, "API request failed")
         emit(
-            ApiResult.Error(
+            Result.Error(
                 exception = e,
                 message = e.toErrorMessage(),
                 code = e.toErrorCode()
@@ -89,7 +89,7 @@ fun <T> apiRequestWithoutLoading(
 }.catch { e ->
     Timber.e(e, "Flow error")
     emit(
-        ApiResult.Error(
+        Result.Error(
             exception = e,
             message = e.toErrorMessage(),
             code = e.toErrorCode()
@@ -99,7 +99,7 @@ fun <T> apiRequestWithoutLoading(
 
 /**
  * 简化的 suspend 调用方式
- * 直接返回 ApiResult，不使用 Flow
+ * 直接返回 Result，不使用 Flow
  *
  * 使用示例：
  * ```
@@ -115,13 +115,13 @@ fun <T> apiRequestWithoutLoading(
  */
 suspend fun <T> safeApiCall(
     request: suspend () -> ApiResponse<T>
-): ApiResult<T> {
+): Result<T> {
     return try {
         val response = request()
-        response.toApiResult()
+        response.toResult()
     } catch (e: Exception) {
         Timber.e(e, "API call failed")
-        ApiResult.Error(
+        Result.Error(
             exception = e,
             message = e.toErrorMessage(),
             code = e.toErrorCode()
@@ -132,11 +132,11 @@ suspend fun <T> safeApiCall(
 /**
  * 对已有的 Flow 进行转换，添加异常处理
  */
-fun <T> Flow<T>.asApiResult(): Flow<ApiResult<T>> = flow {
-    emit(ApiResult.Loading)
-    this@asApiResult.collect { data ->
-        emit(ApiResult.Success(data))
+fun <T> Flow<T>.asResult(): Flow<Result<T>> = flow {
+    emit(Result.Loading)
+    this@asResult.collect { data ->
+        emit(Result.Success(data))
     }
 }.catch { e ->
-    emit(ApiResult.Error(exception = e, message = e.toErrorMessage(), code = e.toErrorCode()))
+    emit(Result.Error(exception = e, message = e.toErrorMessage(), code = e.toErrorCode()))
 }.flowOn(Dispatchers.IO)
