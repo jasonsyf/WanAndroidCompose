@@ -40,7 +40,7 @@
 ### Architecture & Design Patterns
 - **MVI (Model-View-Intent)** - Predictable state management
 - **Repository Pattern** - Data layer abstraction
-- **Use Case Pattern** - Business logic encapsulation
+- **Use Case Pattern** - Business logic encapsulation //TODO
 
 ### Jetpack Components
 - **Compose** - Declarative UI framework
@@ -264,7 +264,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📮 Contact
 
 - **Author**: Sun Yufeng
-- **Email**: your.email@example.com
+- **Email **: jasonsunyf@gmail.com
 - **GitHub**: [@jasonsyf](https://github.com/jasonsyf)
 
 ## 🙏 Acknowledgments
