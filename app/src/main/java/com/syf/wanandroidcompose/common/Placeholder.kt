@@ -1,6 +1,13 @@
 package com.syf.wanandroidcompose.common
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.InfiniteTransition
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,28 +41,19 @@ fun Modifier.placeholder(
         properties["color"] = color
         properties["shape"] = shape
         properties["highlight"] = highlight
-    }
-) {
+    }) {
     if (!visible) return@composed this
-
     val infiniteTransition = rememberInfiniteTransition(label = "placeholder")
     val highlightBrush = highlight?.brush(infiniteTransition)
 
     Modifier.then(
-        Modifier.drawWithContent {
-            // Placeholder covers the content, so we don't call drawContent()
-            
-            val outline = shape.createOutline(size, layoutDirection, this)
-            
-            // Draw background color
+        Modifier.drawWithContent { // Placeholder covers the content, so we don't call drawContent()
+            val outline = shape.createOutline(size, layoutDirection, this) // Draw background color
             drawOutline(
                 outline = outline,
                 color = color,
-            )
-
-            // Draw highlight (Shimmer)
-            highlightBrush?.let { brush ->
-                // Apply the shape to the shimmer as well
+            ) // Draw highlight (Shimmer)
+            highlightBrush?.let { brush -> // Apply the shape to the shimmer as well
                 drawIntoCanvas { canvas ->
                     canvas.save()
                     canvas.clipPath(Path().apply { addOutline(outline) })
@@ -63,8 +61,7 @@ fun Modifier.placeholder(
                     canvas.restore()
                 }
             }
-        }
-    )
+        })
 }
 
 interface PlaceholderHighlight {
@@ -82,10 +79,8 @@ fun PlaceholderHighlight.Companion.shimmer(
     highlightColor: Color = Color.White.copy(alpha = 0.5f),
     animationSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(
-            durationMillis = 1500,
-            easing = LinearEasing
-        ),
-        repeatMode = RepeatMode.Restart
+            durationMillis = 1500, easing = LinearEasing
+        ), repeatMode = RepeatMode.Restart
     ),
 ): PlaceholderHighlight = Shimmer(
     highlightColor = highlightColor,
@@ -99,10 +94,7 @@ private data class Shimmer(
     @Composable
     override fun brush(infiniteTransition: InfiniteTransition): Brush {
         val progress by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = animationSpec,
-            label = "shimmer"
+            initialValue = 0f, targetValue = 1f, animationSpec = animationSpec, label = "shimmer"
         )
 
         return remember(progress, highlightColor) {
@@ -112,7 +104,7 @@ private data class Shimmer(
                     highlightColor,
                     Color.Transparent,
                 ),
-                start = Offset(x = 0f, y = 0f), 
+                start = Offset(x = 0f, y = 0f),
                 end = Offset(x = Float.POSITIVE_INFINITY, y = Float.POSITIVE_INFINITY), // Diagonal
                 // Ideally this needs to be relative to the size drawn, but Brush.linearGradient
                 // is usually relative to the drawing area if not specified absolute.
@@ -133,16 +125,11 @@ private data class MovingShimmer(
     @Composable
     override fun brush(infiniteTransition: InfiniteTransition): Brush {
         val effectOffset = infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1000f, // Arbitrary large pixel value for translation
-            animationSpec = animationSpec,
-            label = "shimmer_offset"
-        )
-        
-        // This is tricky because we don't know the size yet.
+            initialValue = 0f, targetValue = 1000f, // Arbitrary large pixel value for translation
+            animationSpec = animationSpec, label = "shimmer_offset"
+        ) // This is tricky because we don't know the size yet.
         // A robust solution uses a Brush subclass or shader. 
         // For simplicity, let's just make a gradient that is large enough.
-        
         return Brush.linearGradient(
             0.0f to Color.Transparent,
             0.5f to highlightColor,
@@ -153,33 +140,28 @@ private data class MovingShimmer(
     }
 }
 
-fun PlaceholderHighlight.Companion.shimmerSimple(): PlaceholderHighlight = object : PlaceholderHighlight {
-    @Composable
-    override fun brush(infiniteTransition: InfiniteTransition): Brush {
-        val translateAnim by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 2000f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = 1200,
-                    easing = LinearEasing
+fun PlaceholderHighlight.Companion.shimmerSimple(): PlaceholderHighlight =
+    object : PlaceholderHighlight {
+        @Composable
+        override fun brush(infiniteTransition: InfiniteTransition): Brush {
+            val translateAnim by infiniteTransition.animateFloat(
+                initialValue = 0f, targetValue = 2000f, animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 1200, easing = LinearEasing
+                    ), repeatMode = RepeatMode.Restart
+                ), label = "shimmer"
+            )
+
+            return Brush.linearGradient(
+                colors = listOf(
+                    Color.Transparent, Color.White.copy(alpha = 0.5f), Color.Transparent
                 ),
-                repeatMode = RepeatMode.Restart
-            ),
-            label = "shimmer"
-        )
-        
-        return Brush.linearGradient(
-            colors = listOf(
-                Color.Transparent,
-                Color.White.copy(alpha = 0.5f),
-                Color.Transparent
-            ),
-            start = Offset(translateAnim - 1000f, translateAnim - 1000f),
-            end = Offset(translateAnim, translateAnim)
-        )
+                start = Offset(translateAnim - 1000f, translateAnim - 1000f),
+                end = Offset(translateAnim, translateAnim)
+            )
+        }
     }
-}
 
 // Updating the main Shimmer function to use the simple implementation
-fun PlaceholderHighlight.Companion.shimmer(highlightColor: Color = Color.White.copy(alpha = 0.5f), ) = shimmerSimple()
+fun PlaceholderHighlight.Companion.shimmer(highlightColor: Color = Color.White.copy(alpha = 0.5f)) =
+    shimmerSimple()

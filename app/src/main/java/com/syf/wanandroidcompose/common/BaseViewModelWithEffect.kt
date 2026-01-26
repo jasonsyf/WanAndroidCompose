@@ -15,8 +15,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 
-
-abstract class BaseViewModelWithEffect<A : Action, S : State, E : Effect> : ViewModel(){
+abstract class BaseViewModelWithEffect<A : Action, S : State, E : Effect> : ViewModel() {
     /**
      * [event]包含用户与ui的交互（如点击操作），也有来自后台的消息（如切换自习模式）
      */

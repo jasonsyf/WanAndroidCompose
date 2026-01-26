@@ -4,7 +4,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.syf.wanandroidcompose.BuildConfig
-import com.syf.wanandroidcompose.network.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +32,6 @@ import timber.log.Timber
  * @param S State 类型
  */
 abstract class BaseViewModelOptimized<A : Action, S : State> : ViewModel() {
-
     /**
      * Action 通道，使用缓冲区防止事件丢失
      *
@@ -51,7 +49,7 @@ abstract class BaseViewModelOptimized<A : Action, S : State> : ViewModel() {
      * DROP_OLDEST: 缓冲区满时丢弃最旧的状态
      */
     private val _state =
-            MutableSharedFlow<S>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<S>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /** 暴露给外部的状态流 distinctUntilChanged: 只在状态真正改变时才发送 */
     val state: Flow<S> by lazy { _state.distinctUntilChanged() }
@@ -145,40 +143,33 @@ abstract class BaseViewModelOptimized<A : Action, S : State> : ViewModel() {
      * @param block 要执行的协程代码
      * @return Job
      */
-    protected fun launchAction(key: String? = null, block: suspend CoroutineScope.() -> Unit): Job {
-        // 取消之前相同 key 的 Job
-        key?.let { actionJobs[it]?.cancel() }
+    protected fun launchAction(
+        key: String? = null,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job { // 取消之前相同 key 的 Job
+        key?.let { actionJobs[it]?.cancel() } // 创建异常处理器，防止未捕获的异常导致崩溃
+        val exceptionHandler = kotlinx.coroutines.CoroutineExceptionHandler { _, exception ->
+            if (exception is Exception) {
+                logException(exception, null)
+                handleException(exception, null)
+            } else { // 非 Exception 类型的 Throwable，重新抛出（如 OutOfMemoryError）
+                throw Exception()
+            }
+        }
 
-        // 创建异常处理器，防止未捕获的异常导致崩溃
-        val exceptionHandler =
-                kotlinx.coroutines.CoroutineExceptionHandler { _, exception ->
-                    if (exception is Exception) {
-                        logException(exception, null)
-                        handleException(exception, null)
-                    } else {
-                        // 非 Exception 类型的 Throwable，重新抛出（如 OutOfMemoryError）
-                        throw Exception()
-                    }
+        return viewModelScope.launch(exceptionHandler) {
+                try {
+                    block()
+                } catch (e: Exception) { // 显式捕获异常，确保不会遗漏
+                    logException(e, null)
+                    handleException(e, null)
                 }
-
-        return viewModelScope
-                .launch(exceptionHandler) {
-                    try {
-                        block()
-                    } catch (e: Exception) {
-                        // 显式捕获异常，确保不会遗漏
-                        logException(e, null)
-                        handleException(e, null)
-                    }
+            }.also { job -> // 保存新的 Job
+                key?.let {
+                    actionJobs[it] = job // Job 完成后清理
+                    job.invokeOnCompletion { actionJobs.remove(key) }
                 }
-                .also { job ->
-                    // 保存新的 Job
-                    key?.let {
-                        actionJobs[it] = job
-                        // Job 完成后清理
-                        job.invokeOnCompletion { actionJobs.remove(key) }
-                    }
-                }
+            }
     }
 
     /**
@@ -205,8 +196,7 @@ abstract class BaseViewModelOptimized<A : Action, S : State> : ViewModel() {
      * @param exception 异常
      * @param action 触发异常的 Action
      */
-    protected open fun handleException(exception: Exception, action: A?) {
-        // 默认不做处理，子类可以重写
+    protected open fun handleException(exception: Exception, action: A?) { // 默认不做处理，子类可以重写
         // 例如：发送错误状态、显示 Toast 等
     }
 

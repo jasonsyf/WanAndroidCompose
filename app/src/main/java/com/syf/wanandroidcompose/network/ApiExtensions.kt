@@ -14,7 +14,6 @@ import timber.log.Timber
  * 网络请求扩展函数
  * 用于简化 MVI 模式下的网络请求调用
  */
-
 /**
  * 发起网络请求并返回 Flow<Result<T>>
  * 适用于 MVI 架构中的 ViewModel
@@ -41,23 +40,17 @@ fun <T> apiRequest(
         Timber.e(e, "API request failed")
         emit(
             Result.Error(
-                exception = e,
-                message = e.toErrorMessage(),
-                code = e.toErrorCode()
+                exception = e, message = e.toErrorMessage(), code = e.toErrorCode()
             )
         )
     }
-}.onStart {
-    // 发起请求前先发送 Loading 状态
+}.onStart { // 发起请求前先发送 Loading 状态
     emit(Result.Loading)
-}.catch { e ->
-    // 捕获异常并转换为 Error 状态
+}.catch { e -> // 捕获异常并转换为 Error 状态
     Timber.e(e, "Flow error")
     emit(
         Result.Error(
-            exception = e,
-            message = e.toErrorMessage(),
-            code = e.toErrorCode()
+            exception = e, message = e.toErrorMessage(), code = e.toErrorCode()
         )
     )
 }.flowOn(Dispatchers.IO) // 在 IO 线程执行
@@ -80,9 +73,7 @@ fun <T> apiRequestWithoutLoading(
         Timber.e(e, "API request failed")
         emit(
             Result.Error(
-                exception = e,
-                message = e.toErrorMessage(),
-                code = e.toErrorCode()
+                exception = e, message = e.toErrorMessage(), code = e.toErrorCode()
             )
         )
     }
@@ -90,9 +81,7 @@ fun <T> apiRequestWithoutLoading(
     Timber.e(e, "Flow error")
     emit(
         Result.Error(
-            exception = e,
-            message = e.toErrorMessage(),
-            code = e.toErrorCode()
+            exception = e, message = e.toErrorMessage(), code = e.toErrorCode()
         )
     )
 }.flowOn(Dispatchers.IO)
@@ -122,9 +111,7 @@ suspend fun <T> safeApiCall(
     } catch (e: Exception) {
         Timber.e(e, "API call failed")
         Result.Error(
-            exception = e,
-            message = e.toErrorMessage(),
-            code = e.toErrorCode()
+            exception = e, message = e.toErrorMessage(), code = e.toErrorCode()
         )
     }
 }

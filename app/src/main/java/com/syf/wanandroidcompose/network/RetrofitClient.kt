@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit
  * 提供统一的网络请求配置
  */
 object RetrofitClient {
-
     /**
      * 玩 Android API 基础地址
      */
@@ -50,25 +49,17 @@ object RetrofitClient {
      * OkHttp 客户端
      */
     private val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder().apply {
-            // 设置超时时间
+        OkHttpClient.Builder().apply { // 设置超时时间
             connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
             readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
-            writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-
-            // 添加日志拦截器（仅在 Debug 模式下）
+            writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS) // 添加日志拦截器（仅在 Debug 模式下）
             if (BuildConfig.DEBUG) {
                 addInterceptor(
                     HttpLoggingInterceptor().apply {
                         level = HttpLoggingInterceptor.Level.BODY
-                    }
-                )
-            }
-
-            // 重试机制
-            retryOnConnectionFailure(true)
-
-            // 可以在这里添加更多拦截器
+                    })
+            } // 重试机制
+            retryOnConnectionFailure(true) // 可以在这里添加更多拦截器
             // 例如：token 拦截器、公共参数拦截器等
             // addInterceptor(TokenInterceptor())
             // addInterceptor(CommonParamsInterceptor())
@@ -79,11 +70,8 @@ object RetrofitClient {
      * Retrofit 实例
      */
     private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
+        Retrofit.Builder().baseUrl(BASE_URL).client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType())).build()
     }
 
     /**

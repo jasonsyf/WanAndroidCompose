@@ -16,7 +16,7 @@ interface Action
 interface State
 interface Effect
 
-abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
+abstract class BaseViewModel<A : Action, S : State> : ViewModel() {
     /**
      * [event]包含用户与ui的交互（如点击操作），也有来自后台的消息（如切换自习模式）
      */
@@ -40,7 +40,6 @@ abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
     val replayState
         get() = _state.replayCache.firstOrNull()
 
-
     /** 订阅事件的传入 onAction()分发处理事件 */
     init {
         viewModelScope.launch {
@@ -62,7 +61,6 @@ abstract class BaseViewModel<A : Action, S : State> : ViewModel(){
 
 
     protected suspend fun emitState(state: S) = _state.emit(state)
-
 
     /** 不挂起发送 state ，返回 boolean */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)

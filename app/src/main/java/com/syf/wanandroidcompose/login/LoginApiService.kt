@@ -16,9 +16,7 @@ import retrofit2.http.POST
  * @param T data 字段的类型
  */
 data class BaseResponse<T>(
-    val data: T?,
-    val errorCode: Int,
-    val errorMsg: String
+    val data: T?, val errorCode: Int, val errorMsg: String
 ) {
     /**
      * 判断请求是否成功
@@ -54,8 +52,7 @@ interface ApiService {
     @FormUrlEncoded
     @POST("user/login")
     suspend fun login(
-        @Field("username") username: String,
-        @Field("password") password: String
+        @Field("username") username: String, @Field("password") password: String
     ): BaseResponse<Any>
 
 }
