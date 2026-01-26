@@ -50,9 +50,9 @@ import com.syf.wanandroidcompose.theme.WanAndroidComposeTheme
 import kotlinx.serialization.Serializable
 
 enum class AppDestinations(
-        val label: String,
-        val icon: ImageVector,
-        val topTitle: String,
+    val label: String,
+    val icon: ImageVector,
+    val topTitle: String,
 ) {
     HOME("首页", Icons.Default.Home, "玩Android"),
     PROJECT(" 项目", Icons.Filled.Face, "开源项目"),
@@ -60,9 +60,11 @@ enum class AppDestinations(
     PROFILE("我的", Icons.Default.Person, "个人中心"),
 }
 
-@Serializable object Profile
+@Serializable
+object Profile
 
-@Serializable object FriendsList
+@Serializable
+object FriendsList
 
 @Composable
 fun AppMainView() {
@@ -71,13 +73,10 @@ fun AppMainView() {
     NavHost(navController = rootNavController, startDestination = "tabs") {
         composable("tabs") { MainTabsScreen(rootNavController) }
         composable(
-                route = "detail/{url}",
-                arguments =
-                        listOf(
-                            navArgument("url") {
-                                type = NavType.StringType
-                            }
-                        )
+            route = "detail/{url}", arguments = listOf(
+                navArgument("url") {
+                    type = NavType.StringType
+                })
         ) { backStackEntry ->
             val url = backStackEntry.arguments?.getString("url")
             if (url != null) {
@@ -89,103 +88,75 @@ fun AppMainView() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTabsScreen(rootNavController: NavController) {
+fun MainTabsScreen(rootNavController: NavController) { // 使用 selectedItem 作为单一状态源
+    var selectedItem by rememberSaveable { mutableIntStateOf(0) } // 搜索框输入状态
+    var searchQuery by rememberSaveable { mutableStateOf("") } // Use NavigationBarItemDefaults.colors directly for NavigationBarItem
+    val myNavigationItemColors = NavigationBarItemDefaults.colors(
+        indicatorColor = Color.Transparent,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        unselectedTextColor = Color.Gray,
+        selectedIconColor = MaterialTheme.colorScheme.primary,
+        unselectedIconColor = Color.Gray
+    )
 
-    // 使用 selectedItem 作为单一状态源
-    var selectedItem by rememberSaveable { mutableIntStateOf(0) }
-    // 搜索框输入状态
-    var searchQuery by rememberSaveable { mutableStateOf("") }
-
-    // Use NavigationBarItemDefaults.colors directly for NavigationBarItem
-    val myNavigationItemColors =
-            NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.Transparent,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedTextColor = Color.Gray,
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = Color.Gray
-            )
-
-    Scaffold(
-            topBar = {
-                TopAppBar(
-                        title = {
-                            Text(
-                                    text = AppDestinations.entries[selectedItem].topTitle,
-                                    color = Color.White
-                            )
-                        },
-
-                        // 在 actions 中放置右侧的搜索框
-                        actions = {
-                            IconButton(onClick = {}) {
-                                Icon(
-                                        imageVector = Icons.Filled.Search,
-                                        modifier =
-                                                Modifier.align(Alignment.CenterVertically)
-                                                        .size(35.dp),
-                                        contentDescription = "Selected icon button",
-                                )
-                            }
-                        },
-
-                        // make the visual background a horizontal green gradient
-                        modifier =
-                                Modifier.background(
-                                        brush =
-                                                Brush.horizontalGradient(
-                                                        colors =
-                                                                listOf(
-                                                                        Color(0xff6366f1), // darker
-                                                                        Color(0xFFec4899) // lighter
-                                                                )
-                                                )
-                                ),
-                        // ensure the TopAppBar itself doesn't draw an opaque container over the
-                        // gradient
-                        colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                        containerColor = Color.Transparent
-                                ),
+    Scaffold(topBar = {
+        TopAppBar(
+            title = {
+                Text(
+                    text = AppDestinations.entries[selectedItem].topTitle, color = Color.White
                 )
-            },
-            modifier = Modifier.padding(0.dp),
-            bottomBar = {
-                NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-                    AppDestinations.entries.forEachIndexed { index, it ->
-                        val isSelected = (selectedItem == index)
-                        NavigationBarItem(
-                                icon = {
-                                    val iconSize by
-                                            animateDpAsState(if (isSelected) 30.dp else 26.dp)
-                                    Icon(
-                                            it.icon,
-                                            contentDescription = it.label,
-                                            modifier = Modifier.size(iconSize)
-                                    )
-                                },
-                                label = {
-                                    val fontSize by
-                                            animateFloatAsState(
-                                                    targetValue = if (isSelected) 15f else 13f
-                                            )
-                                    Text(text = it.label, fontSize = fontSize.sp)
-                                },
-                                selected = isSelected,
-                                onClick = {
-                                    // 仅更新选中索引
-                                    selectedItem = index
-                                },
-                                colors = myNavigationItemColors
-                        )
-                    }
+            }, // 在 actions 中放置右侧的搜索框
+            actions = {
+                IconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .size(35.dp),
+                        contentDescription = "Selected icon button",
+                    )
                 }
+            }, // make the visual background a horizontal green gradient
+            modifier = Modifier.background(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xff6366f1), // darker
+                        Color(0xFFec4899) // lighter
+                    )
+                )
+            ), // ensure the TopAppBar itself doesn't draw an opaque container over the
+            // gradient
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent
+            ),
+        )
+    }, modifier = Modifier.padding(0.dp), bottomBar = {
+        NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+            AppDestinations.entries.forEachIndexed { index, it ->
+                val isSelected = (selectedItem == index)
+                NavigationBarItem(
+                    icon = {
+                    val iconSize by animateDpAsState(if (isSelected) 30.dp else 26.dp)
+                    Icon(
+                        it.icon,
+                        contentDescription = it.label,
+                        modifier = Modifier.size(iconSize)
+                    )
+                }, label = {
+                    val fontSize by animateFloatAsState(
+                        targetValue = if (isSelected) 15f else 13f
+                    )
+                    Text(text = it.label, fontSize = fontSize.sp)
+                }, selected = isSelected, onClick = { // 仅更新选中索引
+                    selectedItem = index
+                }, colors = myNavigationItemColors
+                )
             }
-    ) { contentPadding ->
-        // 使用 contentPadding 包裹内容，防止底部导航遮挡
+        }
+    }) { contentPadding -> // 使用 contentPadding 包裹内容，防止底部导航遮挡
         Box(modifier = Modifier.padding(contentPadding)) {
-            val currentDestination = AppDestinations.entries[selectedItem]
-            // Pass rootNavController to destinations so they can navigate to full-screen detail
+            val currentDestination =
+                AppDestinations.entries[selectedItem] // Pass rootNavController to destinations so they can navigate to full-screen detail
             when (currentDestination) {
                 AppDestinations.HOME -> HomeDestination(rootNavController)
                 AppDestinations.PROJECT -> ProjectDestination(rootNavController)
@@ -197,8 +168,7 @@ fun MainTabsScreen(rootNavController: NavController) {
 }
 
 @Composable
-fun HomeDestination(rootNavController: NavController) {
-    // Directly use HomeView with the root controller.
+fun HomeDestination(rootNavController: NavController) { // Directly use HomeView with the root controller.
     // Assuming HomeView logic (LazyColumn etc) fits here.
     // If Home had internal sub-pages, we'd need nested navigation,
     // but for now it's just the feed -> detail (root).
@@ -206,8 +176,7 @@ fun HomeDestination(rootNavController: NavController) {
 }
 
 @Composable
-fun ProjectDestination(rootNavController: NavController) {
-    // Reuse HomeView for now as per previous logic
+fun ProjectDestination(rootNavController: NavController) { // Reuse HomeView for now as per previous logic
     HomeView(rootNavController)
 }
 

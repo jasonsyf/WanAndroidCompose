@@ -19,9 +19,9 @@ sealed class Result<out T> {
      * @param code 错误代码
      */
     data class Error(
-            val exception: Throwable,
-            val message: String = exception.message ?: "未知错误",
-            val code: Int = -1
+        val exception: Throwable,
+        val message: String = exception.message ?: "未知错误",
+        val code: Int = -1
     ) : Result<Nothing>()
 
     /** 加载中状态 */
@@ -40,34 +40,30 @@ sealed class Result<out T> {
         get() = this is Loading
 
     /** 获取数据，如果失败则返回 null */
-    fun getOrNull(): T? =
-            when (this) {
-                is Success -> data
-                else -> null
-            }
+    fun getOrNull(): T? = when (this) {
+        is Success -> data
+        else -> null
+    }
 
     /** 获取数据，如果失败则抛出异常 */
-    fun getOrThrow(): T =
-            when (this) {
-                is Success -> data
-                is Error -> throw exception
-                is Loading -> throw IllegalStateException("数据正在加载中")
-            }
+    fun getOrThrow(): T = when (this) {
+        is Success -> data
+        is Error -> throw exception
+        is Loading -> throw IllegalStateException("数据正在加载中")
+    }
 
     /** 获取数据，如果失败则返回默认值 */
-    fun getOrElse(defaultValue: @UnsafeVariance T): T =
-            when (this) {
-                is Success -> data
-                else -> defaultValue
-            }
+    fun getOrElse(defaultValue: @UnsafeVariance T): T = when (this) {
+        is Success -> data
+        else -> defaultValue
+    }
 
     /** 映射数据 */
-    inline fun <R> map(transform: (T) -> R): Result<R> =
-            when (this) {
-                is Success -> Success(transform(data))
-                is Error -> this
-                is Loading -> this
-            }
+    inline fun <R> map(transform: (T) -> R): Result<R> = when (this) {
+        is Success -> Success(transform(data))
+        is Error -> this
+        is Loading -> this
+    }
 
     /** 在成功时执行操作 */
     inline fun onSuccess(action: (T) -> Unit): Result<T> {
@@ -91,18 +87,18 @@ sealed class Result<out T> {
         /** 从 ApiResponse 创建 Error 用于处理 API 返回的错误响应 */
         fun <T> apiError(response: ApiResponse<T>): Error {
             return Error(
-                    exception = ApiException(response.errorCode, response.errorMsg),
-                    message = response.errorMsg.ifEmpty { "请求失败" },
-                    code = response.errorCode
+                exception = ApiException(response.errorCode, response.errorMsg),
+                message = response.errorMsg.ifEmpty { "请求失败" },
+                code = response.errorCode
             )
         }
 
         /** 从异常创建 Error 用于处理网络异常、超时等 */
         fun fromException(exception: Throwable, message: String? = null, code: Int = -1): Error {
             return Error(
-                    exception = exception,
-                    message = message ?: exception.message ?: "未知错误",
-                    code = code
+                exception = exception,
+                message = message ?: exception.message ?: "未知错误",
+                code = code
             )
         }
     }

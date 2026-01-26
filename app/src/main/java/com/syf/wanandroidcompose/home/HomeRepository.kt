@@ -11,105 +11,93 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class HomeRepository(private val apiService: HomeApiService, private val localDataSource: HomeDao) {
-
-    /** Local cached articles flow */
+    /** 本地缓存的文章流 */
     val articles: Flow<List<ArticleData>> =
-        localDataSource.getAllArticles().map { entities -> entities.map { it.toData() } }
+            localDataSource.getAllArticles().map { entities -> entities.map { it.toData() } }
 
-    /** Local cached banners flow */
+    /** 本地缓存的轮播图流 */
     val banners: Flow<List<BannerData>> =
-        localDataSource.getBanners().map { entities -> entities.map { it.toData() } }
+            localDataSource.getBanners().map { entities -> entities.map { it.toData() } }
 
-    /** Local cached WeChat accounts flow */
+    /** 本地缓存的微信公众号流 */
     val weChatAccounts: Flow<List<WeChatAccountData>> =
-        localDataSource.getWeChatAccounts().map { entities -> entities.map { it.toData() } }
+            localDataSource.getWeChatAccounts().map { entities -> entities.map { it.toData() } }
 
-    /**
-     * Refresh articles (Page 0) using Flow pattern Emits Loading -> Success/Error Updates local
-     * cache on success
-     */
+    /** 刷新文章列表（第 0 页） 使用 Flow 模式，发射 Loading -> Success/Error 成功时更新本地缓存 */
     fun fetchArticles(): Flow<Result<ArticleListData>> =
-        flow {
-            emit(Result.Loading)
-            try {
-                val response = apiService.getArticleList(0)
-                if (response.errorCode == 0 && response.data != null) {
-                    val articles = response.data.datas
-                    localDataSource.replaceArticles(articles.map { it.toEntity() })
-                    emit(Result.Success(response.data))
-                } else {
-                    emit(Result.apiError(response))
-                }
-            } catch (e: Exception) {
-                emit(Result.fromException(e, "网络异常，请检查网络连接"))
-            }
-        }
-            .flowOn(Dispatchers.IO)
-
-    /**
-     * Load more articles (Page > 0) using Flow pattern Emits Loading -> Success/Error Appends to
-     * local cache on success
-     */
-    fun fetchMoreArticles(page: Int): Flow<Result<ArticleListData>> =
-        flow {
-            emit(Result.Loading)
-            try {
-                val response = apiService.getArticleList(page)
-                if (response.errorCode == 0 && response.data != null) {
-                    val articles = response.data.datas
-                    if (articles.isNotEmpty()) {
-                        localDataSource.insertArticles(articles.map { it.toEntity() })
+            flow {
+                        emit(Result.Loading)
+                        try {
+                            val response = apiService.getArticleList(0)
+                            if (response.errorCode == 0 && response.data != null) {
+                                val articles = response.data.datas
+                                localDataSource.replaceArticles(articles.map { it.toEntity() })
+                                emit(Result.Success(response.data))
+                            } else {
+                                emit(Result.apiError(response))
+                            }
+                        } catch (e: Exception) {
+                            emit(Result.fromException(e, "网络异常，请检查网络连接"))
+                        }
                     }
-                    emit(Result.Success(response.data))
-                } else {
-                    emit(Result.apiError(response))
-                }
-            } catch (e: Exception) {
-                emit(Result.fromException(e, "网络异常，请检查网络连接"))
-            }
-        }
-            .flowOn(Dispatchers.IO)
+                    .flowOn(Dispatchers.IO)
 
-    /**
-     * Get banner data using Flow pattern Emits Loading -> Success/Error Updates local cache on
-     * success
-     */
+    /** 加载更多文章（页码 > 0） 使用 Flow 模式，发射 Loading -> Success/Error 成功时追加到本地缓存 */
+    fun fetchMoreArticles(page: Int): Flow<Result<ArticleListData>> =
+            flow {
+                        emit(Result.Loading)
+                        try {
+                            val response = apiService.getArticleList(page)
+                            if (response.errorCode == 0 && response.data != null) {
+                                val articles = response.data.datas
+                                if (articles.isNotEmpty()) {
+                                    localDataSource.insertArticles(articles.map { it.toEntity() })
+                                }
+                                emit(Result.Success(response.data))
+                            } else {
+                                emit(Result.apiError(response))
+                            }
+                        } catch (e: Exception) {
+                            emit(Result.fromException(e, "网络异常，请检查网络连接"))
+                        }
+                    }
+                    .flowOn(Dispatchers.IO)
+
+    /** 获取轮播图数据 使用 Flow 模式，发射 Loading -> Success/Error 成功时更新本地缓存 */
     fun fetchBanners(): Flow<Result<List<BannerData>>> =
-        flow {
-            emit(Result.Loading)
-            try {
-                val response = apiService.getBanner()
-                if (response.errorCode == 0 && response.data != null) {
-                    localDataSource.replaceBanners(response.data.map { it.toEntity() })
-                    emit(Result.Success(response.data))
-                } else {
-                    emit(Result.apiError(response))
-                }
-            } catch (e: Exception) {
-                emit(Result.fromException(e, "网络异常，请检查网络连接"))
-            }
-        }
-            .flowOn(Dispatchers.IO)
+            flow {
+                        emit(Result.Loading)
+                        try {
+                            val response = apiService.getBanner()
+                            if (response.errorCode == 0 && response.data != null) {
+                                localDataSource.replaceBanners(response.data.map { it.toEntity() })
+                                emit(Result.Success(response.data))
+                            } else {
+                                emit(Result.apiError(response))
+                            }
+                        } catch (e: Exception) {
+                            emit(Result.fromException(e, "网络异常，请检查网络连接"))
+                        }
+                    }
+                    .flowOn(Dispatchers.IO)
 
-    /**
-     * Get WeChat accounts using Flow pattern Emits Loading -> Success/Error Updates local cache on
-     * success
-     */
+    /** 获取微信公众号数据 使用 Flow 模式，发射 Loading -> Success/Error 成功时更新本地缓存 */
     fun fetchWeChatAccounts(): Flow<Result<List<WeChatAccountData>>> =
-        flow {
-            emit(Result.Loading)
-            try {
-                val response = apiService.getWeChatAccounts()
-                if (response.errorCode == 0 && response.data != null) {
-                    localDataSource.replaceWeChatAccounts(
-                        response.data.map { it.toEntity() }
-                    )
-                    emit(Result.Success(response.data))
-                } else {
-                    emit(Result.apiError(response))
-                }
-            } catch (e: Exception) {
-                emit(Result.fromException(e, "网络异常，请检查网络连接"))
-            }
-        }.flowOn(Dispatchers.IO)
+            flow {
+                        emit(Result.Loading)
+                        try {
+                            val response = apiService.getWeChatAccounts()
+                            if (response.errorCode == 0 && response.data != null) {
+                                localDataSource.replaceWeChatAccounts(
+                                        response.data.map { it.toEntity() }
+                                )
+                                emit(Result.Success(response.data))
+                            } else {
+                                emit(Result.apiError(response))
+                            }
+                        } catch (e: Exception) {
+                            emit(Result.fromException(e, "网络异常，请检查网络连接"))
+                        }
+                    }
+                    .flowOn(Dispatchers.IO)
 }

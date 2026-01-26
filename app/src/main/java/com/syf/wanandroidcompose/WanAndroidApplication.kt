@@ -5,7 +5,6 @@ import androidx.room.Room
 import com.syf.wanandroidcompose.home.local.HomeDatabase
 
 class WanAndroidApplication : Application() {
-
     lateinit var database: HomeDatabase
         private set
 
@@ -13,9 +12,8 @@ class WanAndroidApplication : Application() {
         super.onCreate()
         instance = this
         database =
-                Room.databaseBuilder(applicationContext, HomeDatabase::class.java, "wanandroid_db")
-                        .fallbackToDestructiveMigration()
-                        .build()
+            Room.databaseBuilder(applicationContext, HomeDatabase::class.java, "wanandroid_db")
+                .fallbackToDestructiveMigration().build()
     }
 
     companion object {
