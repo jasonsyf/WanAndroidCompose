@@ -8,11 +8,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.syf.wanandroidcompose.WanAndroidApplication
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
+import com.syf.wanandroidcompose.home.datasource.local.HomeLocalDataSource
+import com.syf.wanandroidcompose.home.datasource.remote.HomeRemoteDataSource
 import com.syf.wanandroidcompose.network.Result
 import com.syf.wanandroidcompose.network.RetrofitClient
 import com.syf.wanandroidcompose.utils.NetworkUtils
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
@@ -25,40 +26,34 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
 
     init { // 观察本地数据库数据
         viewModelScope.launch {
-            repository.articles.collectLatest { articles ->
+            repository.homeData.collectLatest { cachedData ->
                 allArticles.clear()
-                allArticles.addAll(articles)
-                updateStateWithArticles(articles)
-            }
-        }
-        viewModelScope.launch {
-            repository.banners.collectLatest { banners ->
-                emitState {
-                    replayState?.copy(getBannerData = banners)
-                            ?: HomeListState(getBannerData = banners)
-                }
-            }
-        }
-        viewModelScope.launch {
-            repository.weChatAccounts.collectLatest { accounts ->
-                emitState {
-                    replayState?.copy(getPublicData = accounts)
-                            ?: HomeListState(getPublicData = accounts)
-                }
+                allArticles.addAll(cachedData.articles)
+                updateStateWithHomeData(cachedData)
             }
         } // 初始加载
         refreshAllData(isFirstLoad = true)
     }
 
-    /** 使用文章列表更新状态 自动提取分类并应用当前筛选条件 */
-    private fun updateStateWithArticles(articles: List<ArticleData>) {
+    /** 使用本地缓存更新状态，自动提取分类并应用当前筛选条件 */
+    private fun updateStateWithHomeData(cachedData: HomeCachedData) {
         emitState {
-            val categories = extractCategories(articles) // 应用当前筛选
+            val categories = extractCategories(cachedData.articles) // 应用当前筛选
             val currentSelectedId = replayState?.selectedCategoryId ?: 0
-            val filteredList = filterArticles(articles, currentSelectedId)
+            val filteredList = filterArticles(cachedData.articles, currentSelectedId)
 
-            replayState?.copy(getArticleData = filteredList, categories = categories)
-                    ?: HomeListState(getArticleData = filteredList, categories = categories)
+            replayState?.copy(
+                    getArticleData = filteredList,
+                    categories = categories,
+                    getBannerData = cachedData.banners,
+                    getPublicData = cachedData.weChatAccounts
+            )
+                    ?: HomeListState(
+                            getArticleData = filteredList,
+                            categories = categories,
+                            getBannerData = cachedData.banners,
+                            getPublicData = cachedData.weChatAccounts
+                    )
         }
     }
 
@@ -206,19 +201,13 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                 )
             }
             return
-        } // 重置分页
+        }
+        // 重置分页
         currentPage = 0
-        allArticles.clear()
-
-        launchAction("RefreshFinish") { // 合并所有三个网络请求到一个 Flow
-            combine(
-                            repository.fetchBanners(),
-                            repository.fetchArticles(),
-                            repository.fetchWeChatAccounts()
-                    ) { bannerResult, articleResult, accountResult ->
-                Triple(bannerResult, articleResult, accountResult)
-            }
-                    .onStart { // 在开始时发出加载状态
+        launchAction("RefreshFinish") {
+            repository.refreshHomeData().collect { result ->
+                when (result) {
+                    is Result.Loading -> {
                         emitState {
                             val defaultState = HomeListState(selectedCategoryId = 0)
                             if (isFirstLoad) {
@@ -239,32 +228,29 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                             }
                         }
                     }
-                    .collect { (bannerResult, articleResult, accountResult) -> // 判断是否有请求仍在加载
-                        val isLoading =
-                                listOf(bannerResult, articleResult, accountResult).any {
-                                    it is Result.Loading
-                                } // 收集错误信息
-                        val errors =
-                                listOf(bannerResult, articleResult, accountResult)
-                                        .filterIsInstance<Result.Error>()
-                                        .map { it.message }
-
+                    is Result.Success -> {
                         emitState {
-                            var state = replayState ?: HomeListState() // 处理文章请求结果并更新状态
-                            if (articleResult is Result.Success) {
-                                state =
-                                        state.copy(
-                                                hasMore = !articleResult.data.over,
-                                                selectedCategoryId = 0
-                                        )
-                            } // 更新加载状态和错误信息
+                            val state = replayState ?: HomeListState()
                             state.copy(
-                                    isLoading = if (isFirstLoad) isLoading else false,
-                                    isRefreshing = if (!isFirstLoad) isLoading else false,
-                                    errorMsg = errors.firstOrNull() // Show first error if any
+                                    isLoading = false,
+                                    isRefreshing = false,
+                                    hasMore = result.data.hasMore ?: state.hasMore,
+                                    errorMsg = result.data.errorMessage
                             )
                         }
                     }
+                    is Result.Error -> {
+                        emitState {
+                            val state = replayState ?: HomeListState()
+                            state.copy(
+                                    isLoading = false,
+                                    isRefreshing = false,
+                                    errorMsg = result.message
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -272,10 +258,13 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as WanAndroidApplication)
+                val remoteDataSource =
+                        HomeRemoteDataSource(RetrofitClient.create<HomeApiService>())
+                val localDataSource = HomeLocalDataSource(application.database.homeDao())
                 val repository =
                         HomeRepository(
-                                RetrofitClient.create<HomeApiService>(),
-                                application.database.homeDao()
+                                remoteDataSource = remoteDataSource,
+                                localDataSource = localDataSource
                         )
                 HomeViewModel(repository, application)
             }
