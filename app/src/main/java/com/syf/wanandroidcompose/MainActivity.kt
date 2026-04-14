@@ -12,6 +12,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WanAndroidComposeTheme {
+                //应用主页
                 AppMainView()
             }
         }
