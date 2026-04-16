@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.syf.wanandroidcompose.R
 import com.syf.wanandroidcompose.WanAndroidApplication
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
 import com.syf.wanandroidcompose.home.HomeLocalDataSource
@@ -128,7 +129,9 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
     // 从文章列表中提取分类标签
     private fun extractCategories(articles: List<ArticleData>): List<CategoryUiModel> {
         val categories = mutableListOf<CategoryUiModel>() // 默认添加"全部"
-        categories.add(CategoryUiModel("全部", 0)) // 提取不重复的 superChapterName 和 superChapterId
+        categories.add(
+                CategoryUiModel(application.getString(R.string.label_all), 0)
+        ) // 提取不重复的 superChapterName 和 superChapterId
         val seenIds = mutableSetOf<Int>()
         articles.forEach { article ->
             val id = article.superChapterId
@@ -142,7 +145,12 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
 
     private fun loadMoreArticle() { // 检查网络可用性
         if (!NetworkUtils.isNetworkAvailable(application)) {
-            emitState { replayState?.copy(isLoadingMore = false, errorMsg = "网络不可用，请检查网络连接") }
+            emitState {
+                replayState?.copy(
+                        isLoadingMore = false,
+                        errorMsg = application.getString(R.string.error_network_unavailable)
+                )
+            }
             return
         }
         val currentState = replayState ?: return
@@ -197,7 +205,7 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                 currentState.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        errorMsg = "网络不可用，请检查网络连接"
+                        errorMsg = application.getString(R.string.error_network_unavailable)
                 )
             }
             return

@@ -1,5 +1,7 @@
 package com.syf.wanandroidcompose.network
 
+import com.syf.wanandroidcompose.R
+import com.syf.wanandroidcompose.i18n.AppText
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -21,23 +23,24 @@ object NetworkException {
     /** 将异常转换为错误消息 */
     fun Throwable.toErrorMessage(): String {
         return when (this) {
-            is UnknownHostException, is ConnectException -> "网络连接失败，请检查网络设置"
-            is SocketTimeoutException -> "网络请求超时，请稍后重试"
+            is UnknownHostException, is ConnectException ->
+                    AppText.get(R.string.error_network_connection_failed)
+            is SocketTimeoutException -> AppText.get(R.string.error_network_timeout)
             is HttpException -> {
                 when (code()) {
-                    400 -> "请求参数错误"
-                    401 -> "未授权，请先登录"
-                    403 -> "禁止访问"
-                    404 -> "请求的资源不存在"
-                    500 -> "服务器内部错误"
-                    502 -> "网关错误"
-                    503 -> "服务不可用"
-                    else -> "网络错误: ${code()}"
+                    400 -> AppText.get(R.string.error_bad_request)
+                    401 -> AppText.get(R.string.error_unauthorized)
+                    403 -> AppText.get(R.string.error_forbidden)
+                    404 -> AppText.get(R.string.error_not_found)
+                    500 -> AppText.get(R.string.error_server_internal)
+                    502 -> AppText.get(R.string.error_bad_gateway)
+                    503 -> AppText.get(R.string.error_service_unavailable)
+                    else -> AppText.get(R.string.error_network_code_format, code())
                 }
             }
             is ApiException -> message
-            is IOException -> "网络异常，请检查网络连接"
-            else -> message ?: "未知错误"
+            is IOException -> AppText.get(R.string.error_network_exception)
+            else -> message ?: AppText.get(R.string.error_unknown)
         }
     }
 

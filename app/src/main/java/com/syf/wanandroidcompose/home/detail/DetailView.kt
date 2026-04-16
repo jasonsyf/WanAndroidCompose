@@ -26,16 +26,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import com.syf.wanandroidcompose.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
+    val defaultTitle = stringResource(R.string.title_detail)
     var webView: WebView? by remember { mutableStateOf(null) }
     var progress by remember { mutableFloatStateOf(0f) }
     var pageTitle by remember {
         mutableStateOf(
-            title ?: "详情"
+            title ?: defaultTitle
         )
     } // Intercept back press for WebView history
     BackHandler(enabled = true) {
@@ -52,7 +55,7 @@ fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.action_back)
                     )
                 }
             })

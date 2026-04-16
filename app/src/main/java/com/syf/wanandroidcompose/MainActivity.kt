@@ -1,20 +1,17 @@
 package com.syf.wanandroidcompose
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.syf.wanandroidcompose.theme.WanAndroidComposeTheme
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide()
         enableEdgeToEdge()
         setContent {
-            WanAndroidComposeTheme {
-                //应用主页
-                AppMainView()
-            }
+            AppMainView()
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -30,7 +31,7 @@ import androidx.compose.ui.platform.debugInspectorInfo
  */
 fun Modifier.placeholder(
     visible: Boolean,
-    color: Color = Color(0xFFEEEEEE),
+    color: Color = Color.Unspecified,
     shape: Shape = RectangleShape,
     highlight: PlaceholderHighlight? = null,
 ): Modifier = composed(
@@ -43,6 +44,12 @@ fun Modifier.placeholder(
         properties["highlight"] = highlight
     }) {
     if (!visible) return@composed this
+    val resolvedColor =
+        if (color == Color.Unspecified) {
+            MaterialTheme.colorScheme.surfaceContainerHighest
+        } else {
+            color
+        }
     val infiniteTransition = rememberInfiniteTransition(label = "placeholder")
     val highlightBrush = highlight?.brush(infiniteTransition)
 
@@ -51,7 +58,7 @@ fun Modifier.placeholder(
             val outline = shape.createOutline(size, layoutDirection, this) // Draw background color
             drawOutline(
                 outline = outline,
-                color = color,
+                color = resolvedColor,
             ) // Draw highlight (Shimmer)
             highlightBrush?.let { brush -> // Apply the shape to the shimmer as well
                 drawIntoCanvas { canvas ->
@@ -163,5 +170,30 @@ fun PlaceholderHighlight.Companion.shimmerSimple(): PlaceholderHighlight =
     }
 
 // Updating the main Shimmer function to use the simple implementation
-fun PlaceholderHighlight.Companion.shimmer(highlightColor: Color = Color.White.copy(alpha = 0.5f)) =
-    shimmerSimple()
+fun PlaceholderHighlight.Companion.shimmer(highlightColor: Color = Color.Unspecified) =
+    object : PlaceholderHighlight {
+        @Composable
+        override fun brush(infiniteTransition: InfiniteTransition): Brush {
+            val resolvedHighlight =
+                if (highlightColor == Color.Unspecified) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                } else {
+                    highlightColor
+                }
+            val translateAnim by infiniteTransition.animateFloat(
+                initialValue = 0f, targetValue = 2000f, animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 1200, easing = LinearEasing
+                    ), repeatMode = RepeatMode.Restart
+                ), label = "shimmer"
+            )
+
+            return Brush.linearGradient(
+                colors = listOf(
+                    Color.Transparent, resolvedHighlight, Color.Transparent
+                ),
+                start = Offset(translateAnim - 1000f, translateAnim - 1000f),
+                end = Offset(translateAnim, translateAnim)
+            )
+        }
+    }

@@ -1,5 +1,8 @@
 package com.syf.wanandroidcompose.network
 
+import com.syf.wanandroidcompose.R
+import com.syf.wanandroidcompose.i18n.AppText
+
 /**
  * 通用的网络请求结果封装 适用于 Flow 和 MVI 模式
  *
@@ -20,7 +23,7 @@ sealed class Result<out T> {
      */
     data class Error(
         val exception: Throwable,
-        val message: String = exception.message ?: "未知错误",
+        val message: String = exception.message ?: AppText.get(R.string.error_unknown),
         val code: Int = -1
     ) : Result<Nothing>()
 
@@ -49,7 +52,7 @@ sealed class Result<out T> {
     fun getOrThrow(): T = when (this) {
         is Success -> data
         is Error -> throw exception
-        is Loading -> throw IllegalStateException("数据正在加载中")
+        is Loading -> throw IllegalStateException(AppText.get(R.string.error_data_loading))
     }
 
     /** 获取数据，如果失败则返回默认值 */
@@ -88,7 +91,7 @@ sealed class Result<out T> {
         fun <T> apiError(response: ApiResponse<T>): Error {
             return Error(
                 exception = ApiException(response.errorCode, response.errorMsg),
-                message = response.errorMsg.ifEmpty { "请求失败" },
+                message = response.errorMsg.ifEmpty { AppText.get(R.string.error_request_failed) },
                 code = response.errorCode
             )
         }
@@ -97,7 +100,7 @@ sealed class Result<out T> {
         fun fromException(exception: Throwable, message: String? = null, code: Int = -1): Error {
             return Error(
                 exception = exception,
-                message = message ?: exception.message ?: "未知错误",
+                message = message ?: exception.message ?: AppText.get(R.string.error_unknown),
                 code = code
             )
         }
@@ -105,7 +108,7 @@ sealed class Result<out T> {
 }
 
 /** 将可空类型转换为 Result */
-fun <T> T?.toResult(errorMessage: String = "数据为空"): Result<T> {
+fun <T> T?.toResult(errorMessage: String = AppText.get(R.string.error_data_empty)): Result<T> {
     return if (this != null) {
         Result.Success(this)
     } else {

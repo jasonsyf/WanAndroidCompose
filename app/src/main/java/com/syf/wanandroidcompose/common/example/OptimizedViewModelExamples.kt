@@ -1,12 +1,14 @@
 package com.syf.wanandroidcompose.common.example
 
 import androidx.lifecycle.viewModelScope
+import com.syf.wanandroidcompose.R
 import com.syf.wanandroidcompose.common.Action
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
 import com.syf.wanandroidcompose.common.BaseViewModelWithEffectOptimized
 import com.syf.wanandroidcompose.common.Effect
 import com.syf.wanandroidcompose.common.State
 import com.syf.wanandroidcompose.home.HomeApiService
+import com.syf.wanandroidcompose.i18n.AppText
 import com.syf.wanandroidcompose.network.RetrofitClient
 import com.syf.wanandroidcompose.network.apiRequest
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +58,12 @@ class SearchViewModel : BaseViewModelOptimized<SearchAction, SearchState>() {
             emitState(
                     SearchState(
                             query = query,
-                            results = listOf("结果1: $query", "结果2: $query", "结果3: $query"),
+                            results =
+                                    listOf(
+                                            AppText.get(R.string.search_result_format, 1, query),
+                                            AppText.get(R.string.search_result_format, 2, query),
+                                            AppText.get(R.string.search_result_format, 3, query)
+                                    ),
                             isLoading = false
                     )
             )
@@ -102,7 +109,15 @@ class NetworkViewModel : BaseViewModelOptimized<NetworkAction, NetworkState>() {
             apiRequest { apiService.getBanner() }.collect { result ->
                 result
                         .onSuccess { data ->
-                            emitState(NetworkState(data = "成功加载 ${data.size} 条数据"))
+                            emitState(
+                                    NetworkState(
+                                            data =
+                                                    AppText.get(
+                                                            R.string.network_load_success_format,
+                                                            data.size
+                                                    )
+                                    )
+                            )
                         }
                         .onError { _, message, _ ->
                             // 错误会被 handleException 捕获
@@ -115,7 +130,15 @@ class NetworkViewModel : BaseViewModelOptimized<NetworkAction, NetworkState>() {
     /** 重写异常处理方法 */
     override fun handleException(exception: Exception, action: NetworkAction?) {
         // 自定义异常处理逻辑
-        emitState { NetworkState(error = "发生错误: ${exception.message}") }
+        emitState {
+            NetworkState(
+                    error =
+                            AppText.get(
+                                    R.string.network_error_occurred_format,
+                                    exception.message.orEmpty()
+                            )
+            )
+        }
     }
 }
 
@@ -157,19 +180,21 @@ class LoginViewModel : BaseViewModelWithEffectOptimized<LoginAction, LoginState,
             if (username.isNotEmpty() && password.isNotEmpty()) {
                 // 登录成功
                 emitState(LoginState(isLoggedIn = true, username = username))
-                emitEffect(LoginEffect.ShowToast("登录成功"))
+                emitEffect(LoginEffect.ShowToast(AppText.get(R.string.toast_login_success)))
                 emitEffect(LoginEffect.NavigateToHome)
             } else {
                 // 登录失败
                 emitState(LoginState(isLoading = false))
-                emitEffect(LoginEffect.ShowToast("用户名或密码不能为空"))
+                emitEffect(
+                        LoginEffect.ShowToast(AppText.get(R.string.toast_username_password_empty))
+                )
             }
         }
     }
 
     private fun logout() {
         emitState { LoginState() }
-        emitEffect { LoginEffect.ShowToast("已退出登录") }
+        emitEffect { LoginEffect.ShowToast(AppText.get(R.string.toast_logout_success)) }
         emitEffect { LoginEffect.NavigateToLogin }
     }
 }

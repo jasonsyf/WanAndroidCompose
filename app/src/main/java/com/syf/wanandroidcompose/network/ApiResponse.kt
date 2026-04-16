@@ -1,5 +1,7 @@
 package com.syf.wanandroidcompose.network
 
+import com.syf.wanandroidcompose.R
+import com.syf.wanandroidcompose.i18n.AppText
 import kotlinx.serialization.Serializable
 
 /**
@@ -31,7 +33,7 @@ fun <T> ApiResponse<T>.toResult(): Result<T> {
     } else {
         Result.Error(
                 exception = ApiException(errorCode, errorMsg),
-                message = errorMsg.ifEmpty { "请求失败" },
+                message = errorMsg.ifEmpty { AppText.get(R.string.error_request_failed) },
                 code = errorCode
         )
     }

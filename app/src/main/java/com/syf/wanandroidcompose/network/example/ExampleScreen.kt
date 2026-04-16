@@ -20,8 +20,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.syf.wanandroidcompose.R
 import com.syf.wanandroidcompose.home.ArticleData
 import com.syf.wanandroidcompose.home.BannerData
 
@@ -109,7 +111,7 @@ fun ErrorView(
                 color = MaterialTheme.colorScheme.error
             )
             Button(onClick = onRetry) {
-                Text("重试")
+                Text(stringResource(R.string.action_retry))
             }
         }
     }
@@ -193,7 +195,11 @@ fun ArticleItem(article: ArticleData) {
                 style = MaterialTheme.typography.titleSmall
             )
             Text(
-                text = "作者: ${article.author.ifEmpty { article.shareUser }}",
+                text =
+                        stringResource(
+                                R.string.label_author_format,
+                                article.author.ifEmpty { article.shareUser }
+                        ),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -223,7 +229,7 @@ fun LoadMoreButton(
             CircularProgressIndicator()
         } else {
             Button(onClick = onClick) {
-                Text("加载更多")
+                Text(stringResource(R.string.action_load_more))
             }
         }
     }

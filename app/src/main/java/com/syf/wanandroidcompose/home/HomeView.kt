@@ -43,13 +43,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.syf.wanandroidcompose.R
@@ -75,17 +76,17 @@ import java.nio.charset.StandardCharsets
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeView(navController: NavController) {
+    val colorScheme = MaterialTheme.colorScheme
     val bgColor = listOf(
-        Color(0xFFFF6B6B),
-        Color(0xFF4ECDC4),
-        Color(0xFF45B7D1),
-        Color(0xFFFFA07A),
-        Color(0xFF98D8C8),
-        Color(0xFFF7DC6F)
+        colorScheme.primary,
+        colorScheme.secondary,
+        colorScheme.tertiary,
+        colorScheme.error,
+        colorScheme.primaryContainer,
+        colorScheme.secondaryContainer
     )
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
     val state by viewModel.state.collectAsState(initial = HomeListState())
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState() // 初始数据加载由 ViewModel init 处理
     // 监听跳转详情
     LaunchedEffect(state.navigateToDetail) {
@@ -97,7 +98,6 @@ fun HomeView(navController: NavController) {
     }
     val pullToRefreshState = rememberPullToRefreshState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
 
     LaunchedEffect(state.errorMsg) { state.errorMsg?.let { snackbarHostState.showSnackbar(it) } }
 
@@ -111,7 +111,7 @@ fun HomeView(navController: NavController) {
             LazyColumn(
                 state = listState, modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(colorScheme.background)
             ) {
                 item {
                     if (state.getBannerData.isNotEmpty()) {
@@ -134,7 +134,7 @@ fun HomeView(navController: NavController) {
                 item {
                     if (state.getBannerData.isNotEmpty()) {
                         Text(
-                            "优质公众号",
+                            stringResource(R.string.section_quality_accounts),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
                             fontSize = 25.sp,
                             fontWeight = FontWeight.W700
@@ -172,7 +172,7 @@ fun HomeView(navController: NavController) {
                                             ),
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = colorScheme.onPrimary,
                                         textAlign = TextAlign.Center,
                                         lineHeight = 60.sp
                                     )
@@ -261,7 +261,10 @@ fun HomeView(navController: NavController) {
                             if (state.isLoadingMore) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
                             } else if (!state.hasMore) {
-                                Text("没有更多数据了", color = Color.Gray)
+                                Text(
+                                        stringResource(R.string.label_no_more_data),
+                                        color = colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
@@ -282,7 +285,7 @@ fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
             .fillMaxWidth()
             .padding(10.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xffF1F5F9))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable(onClick = onClick)
             .padding(10.dp)
     ) {
@@ -293,7 +296,9 @@ fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
                 .padding(5.dp)
                 .size(25.dp)
                 .align(Alignment.TopEnd),
-            tint = if (item.collect) Color.Red else Color.Gray
+            tint =
+                if (item.collect) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Column(modifier = Modifier.padding(5.dp)) {
             Row(
@@ -302,39 +307,39 @@ fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
             ) {
                 if (item.top == "1") {
                     Text(
-                        "置顶",
+                        text = stringResource(R.string.label_top),
                         modifier = Modifier
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color.Red)
+                            .background(MaterialTheme.colorScheme.error)
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         fontSize = 10.sp,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onError,
                         textAlign = TextAlign.Center
                     )
                 }
                 if (item.fresh) {
                     Text(
-                        "新",
+                        text = stringResource(R.string.label_new),
                         modifier = Modifier
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color.Blue)
+                            .background(MaterialTheme.colorScheme.tertiary)
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         fontSize = 10.sp,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onTertiary,
                         textAlign = TextAlign.Center
                     )
                 }
                 Text(
                     text = item.author.ifEmpty { item.shareUser },
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
                 text = item.title,
                 fontWeight = FontWeight.W700,
                 fontSize = 16.sp,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             Row(
@@ -344,19 +349,23 @@ fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
                 if (item.superChapterName.isNotEmpty()) {
                     Text(
                         text = buildAnnotatedString {
-                            withStyle(style = SpanStyle(color = Color.Blue)) {
+                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
                                 append(item.superChapterName)
                             }
                             append(" / ")
-                            withStyle(style = SpanStyle(color = Color.Red)) {
+                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
                                 append(item.chapterName)
                             }
                         },
                         modifier = Modifier
-                            .border(1.dp, Color.Red, RoundedCornerShape(7.dp))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline,
+                                RoundedCornerShape(7.dp)
+                            )
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         fontSize = 10.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -365,7 +374,7 @@ fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
                 text = item.niceDate,
                 modifier = Modifier.padding(top = 5.dp),
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -399,7 +408,7 @@ fun Carouse(banners: List<BannerData>) {
                     .height(200.dp)
                     .padding(horizontal = 10.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.LightGray) // 占位颜色
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // 占位颜色
             ) {
                 val request = remember {
                     ImageRequest.Builder(context = curContext).data(item.imagePath)
@@ -444,7 +453,7 @@ fun Carouse(banners: List<BannerData>) {
                             .width(24.dp)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(Color.Black)
+                            .background(MaterialTheme.colorScheme.onSurface)
                     )
                 } else {
                     Box(
@@ -483,7 +492,7 @@ fun ChipTabRow(tabs: List<CategoryUiModel>, selectedTabId: Int, onTabSelected: (
 
     LazyRow(
         modifier = Modifier
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .fillMaxWidth()
             .zIndex(1f)
             .padding(vertical = 8.dp), contentPadding = PaddingValues(horizontal = 10.dp), // 两端留白
@@ -495,14 +504,17 @@ fun ChipTabRow(tabs: List<CategoryUiModel>, selectedTabId: Int, onTabSelected: (
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp)) // 圆角矩形
                 .background(
-                    if (isSelected) Color(0xFF1F2531) else Color(0xFFF2F5F9)
+                    if (isSelected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceContainerHigh
                 )
                     .clickable { onTabSelected(category.id) }
                     .padding(horizontal = 25.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center) {
                 Text(
                     text = category.name,
-                    color = if (isSelected) Color.White else Color(0xFF6B778D),
+                    color =
+                        if (isSelected) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 15.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
@@ -515,7 +527,7 @@ fun ChipTabRow(tabs: List<CategoryUiModel>, selectedTabId: Int, onTabSelected: (
 @Composable
 fun HomePreview() {
     WanAndroidComposeTheme {
-        HomeView(viewModel()) //        Greeting("Android")
+        HomeView(rememberNavController())
     }
 }
 
@@ -527,7 +539,7 @@ fun ArticleSkeletonItem() {
             .fillMaxWidth()
             .padding(10.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFF1F5F9))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(10.dp)
     ) {
         Column(modifier = Modifier.padding(5.dp)) { // Row for tags/author

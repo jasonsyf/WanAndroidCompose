@@ -1,9 +1,11 @@
 package com.syf.wanandroidcompose.home
 
+import com.syf.wanandroidcompose.R
 import com.syf.wanandroidcompose.home.HomeLocalDataSource
 import com.syf.wanandroidcompose.home.HomeRemoteDataSource
 import com.syf.wanandroidcompose.home.local.toData
 import com.syf.wanandroidcompose.home.local.toEntity
+import com.syf.wanandroidcompose.i18n.AppText
 import com.syf.wanandroidcompose.network.Result
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -90,7 +92,7 @@ class HomeRepository(
                 emit(Result.apiError(response))
             }
         } catch (e: Exception) {
-            emit(Result.fromException(e, "网络异常，请检查网络连接"))
+            emit(Result.fromException(e, AppText.get(R.string.error_network_exception)))
         }
     }.flowOn(Dispatchers.IO)
 
@@ -110,7 +112,7 @@ class HomeRepository(
         } catch (e: Exception) {
             ArticleRefreshResult(
                 errorMessage = Result.fromException(
-                    e, "网络异常，请检查网络连接"
+                    e, AppText.get(R.string.error_network_exception)
                 ).message
             )
         }
@@ -126,7 +128,7 @@ class HomeRepository(
                 Result.apiError(response).message
             }
         } catch (e: Exception) {
-            Result.fromException(e, "网络异常，请检查网络连接").message
+            Result.fromException(e, AppText.get(R.string.error_network_exception)).message
         }
     }
 
@@ -140,7 +142,7 @@ class HomeRepository(
                 Result.apiError(response).message
             }
         } catch (e: Exception) {
-            Result.fromException(e, "网络异常，请检查网络连接").message
+            Result.fromException(e, AppText.get(R.string.error_network_exception)).message
         }
     }
 }
