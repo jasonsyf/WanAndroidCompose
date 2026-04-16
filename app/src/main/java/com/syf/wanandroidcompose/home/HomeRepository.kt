@@ -1,7 +1,7 @@
 package com.syf.wanandroidcompose.home
 
-import com.syf.wanandroidcompose.home.datasource.local.HomeLocalDataSource
-import com.syf.wanandroidcompose.home.datasource.remote.HomeRemoteDataSource
+import com.syf.wanandroidcompose.home.HomeLocalDataSource
+import com.syf.wanandroidcompose.home.HomeRemoteDataSource
 import com.syf.wanandroidcompose.home.local.toData
 import com.syf.wanandroidcompose.home.local.toEntity
 import com.syf.wanandroidcompose.network.Result
