@@ -16,8 +16,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -172,7 +170,6 @@ fun MainTabsScreen(
     onToggleLanguage: () -> Unit
 ) { // 使用 selectedItem 作为单一状态源
     var selectedItem by rememberSaveable { mutableIntStateOf(0) } // 搜索框输入状态
-    var settingsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val isDark = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
