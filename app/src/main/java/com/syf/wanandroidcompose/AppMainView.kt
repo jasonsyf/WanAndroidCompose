@@ -230,61 +230,6 @@ fun MainTabsScreen(
                         contentDescription = "Selected icon button"
                     )
                 }
-                IconButton(onClick = { settingsMenuExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.action_more_settings)
-                    )
-                }
-                DropdownMenu(
-                    expanded = settingsMenuExpanded,
-                    onDismissRequest = { settingsMenuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text =
-                                        "${stringResource(R.string.menu_language)}: $languageText"
-                            )
-                        },
-                        onClick = {
-                            onToggleLanguage()
-                            settingsMenuExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "${stringResource(R.string.menu_theme_mode)}: $themeModeText"
-                            )
-                        },
-                        onClick = {
-                            onToggleThemeMode()
-                            settingsMenuExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text =
-                                        "${stringResource(R.string.menu_contrast)}: $contrastText"
-                            )
-                        },
-                        onClick = {
-                            onToggleThemeContrast()
-                            settingsMenuExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "${stringResource(R.string.menu_font)}: $fontText")
-                        },
-                        onClick = {
-                            onToggleFontStyle()
-                            settingsMenuExpanded = false
-                        }
-                    )
-                }
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -324,7 +269,21 @@ fun MainTabsScreen(
                 AppDestinations.HOME -> HomeDestination(rootNavController)
                 AppDestinations.PROJECT -> ProjectDestination(rootNavController)
                 AppDestinations.TREE -> TreeDestination(rootNavController)
-                AppDestinations.PROFILE -> ProfileDestination(rootNavController)
+                AppDestinations.PROFILE -> ProfileDestination(
+                    rootNavController = rootNavController,
+                    themeMode = themeMode,
+                    themeContrast = themeContrast,
+                    fontStyle = fontStyle,
+                    appLanguage = appLanguage,
+                    themeModeText = themeModeText,
+                    contrastText = contrastText,
+                    fontText = fontText,
+                    languageText = languageText,
+                    onToggleThemeMode = onToggleThemeMode,
+                    onToggleThemeContrast = onToggleThemeContrast,
+                    onToggleFontStyle = onToggleFontStyle,
+                    onToggleLanguage = onToggleLanguage
+                )
             }
         }
     }
@@ -351,9 +310,34 @@ fun TreeDestination(rootNavController: NavController) {
 }
 
 @Composable
-fun ProfileDestination(rootNavController: NavController) {
+fun ProfileDestination(
+    rootNavController: NavController,
+    themeMode: ThemeMode,
+    themeContrast: ThemeContrast,
+    fontStyle: AppFontStyle,
+    appLanguage: AppLanguage,
+    themeModeText: String,
+    contrastText: String,
+    fontText: String,
+    languageText: String,
+    onToggleThemeMode: () -> Unit,
+    onToggleThemeContrast: () -> Unit,
+    onToggleFontStyle: () -> Unit,
+    onToggleLanguage: () -> Unit
+) {
     val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
-    ProfileView(viewModel = viewModel, rootNavController = rootNavController)
+    ProfileView(
+        viewModel = viewModel, 
+        rootNavController = rootNavController,
+        themeModeText = themeModeText,
+        contrastText = contrastText,
+        fontText = fontText,
+        languageText = languageText,
+        onToggleThemeMode = onToggleThemeMode,
+        onToggleThemeContrast = onToggleThemeContrast,
+        onToggleFontStyle = onToggleFontStyle,
+        onToggleLanguage = onToggleLanguage
+    )
 }
 
 @Preview(showBackground = true)

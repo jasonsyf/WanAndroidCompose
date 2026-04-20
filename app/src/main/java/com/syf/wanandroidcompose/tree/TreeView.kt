@@ -2,6 +2,7 @@
 package com.syf.wanandroidcompose.tree
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -56,14 +57,6 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
     LaunchedEffect(key1 = state.errorMsg) {
         state.errorMsg?.let { msg ->
             snackbarHostState.showSnackbar(msg)
-        }
-    }
-
-    LaunchedEffect(state.navigateToDetail) {
-        state.navigateToDetail?.let { url ->
-            val encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
-            rootNavController.navigate("detail/$encodedUrl")
-            viewModel.sendAction(TreeAction.DetailNavigated)
         }
     }
 
@@ -139,16 +132,21 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                items(state.articles.size) { index ->
+                                items(
+                                    count = state.articles.size,
+                                    key = { index -> state.articles[index].id }
+                                ) { index ->
                                     val article = state.articles[index]
                                     ArticleItem(item = article, onClick = {
-                                        viewModel.sendAction(TreeAction.ClickArticle(article.id.toString(), article.link))
+                                        // 直接执行跳转逻辑，消除状态流转的延迟感
+                                        val encodedUrl = URLEncoder.encode(article.link, StandardCharsets.UTF_8.toString())
+                                        rootNavController.navigate("detail/$encodedUrl")
                                     })
-                                    Spacer(modifier = Modifier.height(8.dp))
                                     if (index == state.articles.size - 1 && !state.isLoadingMore && state.hasMore) {
-                                        LaunchedEffect(Unit) {
+                                        LaunchedEffect(article.id) { // 绑定 ID 防止重复触发
                                             viewModel.sendAction(TreeAction.LoadMore)
                                         }
                                     }

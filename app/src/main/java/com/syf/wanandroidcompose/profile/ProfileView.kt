@@ -45,7 +45,18 @@ import androidx.navigation.compose.rememberNavController
 import com.syf.wanandroidcompose.theme.WanAndroidComposeTheme
 
 @Composable
-fun ProfileView(viewModel: ProfileViewModel = viewModel(), rootNavController: NavController) {
+fun ProfileView(
+    viewModel: ProfileViewModel = viewModel(), 
+    rootNavController: NavController,
+    themeModeText: String = "系统",
+    contrastText: String = "标准",
+    fontText: String = "系统",
+    languageText: String = "系统",
+    onToggleThemeMode: () -> Unit = {},
+    onToggleThemeContrast: () -> Unit = {},
+    onToggleFontStyle: () -> Unit = {},
+    onToggleLanguage: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsStateWithLifecycle(initialValue = ProfileState())
 
     LaunchedEffect(state.navigateToLoginRegister) {
@@ -175,9 +186,31 @@ fun ProfileView(viewModel: ProfileViewModel = viewModel(), rootNavController: Na
                 )
                 
                 ProfileMenuItem(
-                    text = "设置中心",
+                    text = "语言设置",
+                    valueText = languageText,
                     icon = Icons.Default.Settings,
-                    onClick = { viewModel.sendAction(ProfileAction.ClickSettings) }
+                    onClick = onToggleLanguage
+                )
+                
+                ProfileMenuItem(
+                    text = "主题模式",
+                    valueText = themeModeText,
+                    icon = Icons.Default.Settings,
+                    onClick = onToggleThemeMode
+                )
+                
+                ProfileMenuItem(
+                    text = "主题对比度",
+                    valueText = contrastText,
+                    icon = Icons.Default.Settings,
+                    onClick = onToggleThemeContrast
+                )
+                
+                ProfileMenuItem(
+                    text = "字体样式",
+                    valueText = fontText,
+                    icon = Icons.Default.Settings,
+                    onClick = onToggleFontStyle
                 )
             }
         }
@@ -194,7 +227,7 @@ fun ProfileView(viewModel: ProfileViewModel = viewModel(), rootNavController: Na
 }
 
 @Composable
-fun ProfileMenuItem(text: String, icon: ImageVector, onClick: () -> Unit) {
+fun ProfileMenuItem(text: String, valueText: String? = null, icon: ImageVector, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -226,6 +259,15 @@ fun ProfileMenuItem(text: String, icon: ImageVector, onClick: () -> Unit) {
         )
         
         Spacer(modifier = Modifier.weight(1f))
+        
+        if (valueText != null) {
+            Text(
+                text = valueText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
         
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

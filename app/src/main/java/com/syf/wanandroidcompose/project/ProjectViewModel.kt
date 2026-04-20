@@ -84,16 +84,26 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         }
     }
 
-    private fun loadProjects(cid: Int, page: Int) {
-        if (!NetworkUtils.isNetworkAvailable(application)) {
-            emitState {
-                val currentState = replayState ?: ProjectState()
-                currentState.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    isLoadingMore = false,
-                    errorMsg = application.getString(R.string.error_network_unavailable)
-                )
+    private fun loadProjects(cid: Int, page: Int, isSilent: Boolean = false) {
+        val hasCache = (replayState?.projects?.isNotEmpty() == true)
+        val isNetworkAvailable = NetworkUtils.isNetworkAvailable(application)
+
+        if (!isNetworkAvailable) {
+            if (!hasCache && !isSilent) {
+                emitState {
+                    val currentState = replayState ?: ProjectState()
+                    currentState.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                        errorMsg = application.getString(R.string.error_network_unavailable)
+                    )
+                }
+            }
+            if (isSilent || hasCache) {
+                emitState {
+                    replayState?.copy(isLoading = false, isRefreshing = false, isLoadingMore = false) ?: ProjectState()
+                }
             }
             return
         }
@@ -101,11 +111,11 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         launchAction("LoadProjects") {
             repository.getProjectList(page, cid)
                 .onStart {
-                    // 如果是第一页加载，则显示全屏加载或刷新状态
+                    // 如果是第一页加载，且没有缓存，则显示全屏加载
                     if (page == 1) {
                         emitState {
-                            if (replayState?.isRefreshing == true) {
-                                replayState?.copy(projects = emptyList(), errorMsg = null)
+                            if (replayState?.isRefreshing == true || isSilent || hasCache) {
+                                replayState?.copy(errorMsg = null)
                             } else {
                                 replayState?.copy(isLoading = true, projects = emptyList(), errorMsg = null)
                             }
@@ -130,7 +140,7 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                                     isRefreshing = false,
                                     isLoadingMore = false,
                                     projects = currentProjects,
-                                    hasMore = result.data.isNotEmpty(), // TODO: need to get this from API
+                                    hasMore = result.data.isNotEmpty(),
                                     errorMsg = null
                                 ) ?: ProjectState(
                                     projects = currentProjects,
@@ -140,13 +150,19 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                         }
                         is Result.Error -> {
                             if (page > 1) currentPage-- // 加载更多失败，页码回退
-                            emitState {
-                                replayState?.copy(
-                                    isLoading = false,
-                                    isRefreshing = false,
-                                    isLoadingMore = false,
-                                    errorMsg = result.message
-                                ) ?: ProjectState(errorMsg = result.message)
+                            if (!isSilent || !hasCache) {
+                                emitState {
+                                    replayState?.copy(
+                                        isLoading = false,
+                                        isRefreshing = false,
+                                        isLoadingMore = false,
+                                        errorMsg = result.message
+                                    ) ?: ProjectState(errorMsg = result.message)
+                                }
+                            } else {
+                                emitState {
+                                    replayState?.copy(isLoading = false, isRefreshing = false, isLoadingMore = false) ?: ProjectState()
+                                }
                             }
                         }
                         Result.Loading -> {}
@@ -174,7 +190,8 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         if (currentState.isLoadingMore || !currentState.hasMore) return
 
         currentPage++
-        sendAction(ProjectAction.LoadProjects(currentCid, currentPage))
+        // Use silent = false for explicit load more
+        loadProjects(currentCid, currentPage, isSilent = false)
     }
 
     private fun refreshProjects() {
@@ -182,7 +199,7 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         emitState {
             replayState?.copy(isRefreshing = true, hasMore = true, errorMsg = null)
         }
-        sendAction(ProjectAction.LoadProjects(currentCid, currentPage))
+        loadProjects(currentCid, currentPage, isSilent = false)
     }
 
     companion object {

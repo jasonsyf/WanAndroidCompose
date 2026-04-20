@@ -33,7 +33,7 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                 updateStateWithHomeData(cachedData)
             }
         } // 初始加载
-        refreshAllData(isFirstLoad = true)
+        refreshAllData(isFirstLoad = true, isSilent = true)
     }
 
     /** 使用本地缓存更新状态，自动提取分类并应用当前筛选条件 */
@@ -62,7 +62,7 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
         when (action) {
             is HomeAction.ClickArticle -> toDetail(action.articleId)
             is HomeAction.ClickUser -> loadUserArticle(action.userId)
-            is HomeAction.RefreshAllData -> refreshAllData(isFirstLoad = false)
+            is HomeAction.RefreshAllData -> refreshAllData(isFirstLoad = false, isSilent = false)
             is HomeAction.LoadMoreArticle -> loadMoreArticle()
             is HomeAction.SelectCategory -> selectCategory(action.categoryId)
             is HomeAction.DetailNavigated ->
@@ -98,7 +98,7 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
 
     /** 加载文章数据（兼容性方法） */
     private fun loadArticleData() { // 兼容性方法，实际逻辑在 refreshAllData 中
-        refreshAllData(isFirstLoad = false)
+        refreshAllData(isFirstLoad = false, isSilent = true)
     }
 
     /**
@@ -198,18 +198,31 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
         }
     }
 
-    private fun refreshAllData(isFirstLoad: Boolean) { // 检查网络可用性
-        if (!NetworkUtils.isNetworkAvailable(application)) {
-            emitState {
-                val currentState = replayState ?: HomeListState()
-                currentState.copy(
-                        isLoading = false,
-                        isRefreshing = false,
-                        errorMsg = application.getString(R.string.error_network_unavailable)
-                )
+    private fun refreshAllData(isFirstLoad: Boolean, isSilent: Boolean = false) { 
+        val hasCache = allArticles.isNotEmpty()
+        val isNetworkAvailable = NetworkUtils.isNetworkAvailable(application)
+
+        if (!isNetworkAvailable) {
+            // Only show error if we have no cache and it's not a silent refresh
+            if (!hasCache && !isSilent) {
+                emitState {
+                    val currentState = replayState ?: HomeListState()
+                    currentState.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            errorMsg = application.getString(R.string.error_network_unavailable)
+                    )
+                }
+            }
+            // If we have cache, just stop refreshing animation silently
+            if (isSilent || hasCache) {
+                emitState {
+                    replayState?.copy(isLoading = false, isRefreshing = false) ?: HomeListState()
+                }
             }
             return
         }
+
         // 重置分页
         currentPage = 0
         launchAction("RefreshFinish") {
@@ -218,14 +231,14 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                     is Result.Loading -> {
                         emitState {
                             val defaultState = HomeListState(selectedCategoryId = 0)
-                            if (isFirstLoad) {
+                            if (isFirstLoad && !hasCache) {
                                 replayState?.copy(
                                         isLoading = true,
                                         selectedCategoryId = 0,
                                         errorMsg = null
                                 )
                                         ?: defaultState.copy(isLoading = true)
-                            } else {
+                            } else if (!isSilent) {
                                 replayState?.copy(
                                         isRefreshing = true,
                                         hasMore = true,
@@ -233,6 +246,8 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                                         errorMsg = null
                                 )
                                         ?: defaultState.copy(isRefreshing = true, errorMsg = null)
+                            } else {
+                                replayState
                             }
                         }
                     }
@@ -248,20 +263,26 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
                         }
                     }
                     is Result.Error -> {
-                        emitState {
-                            val state = replayState ?: HomeListState()
-                            state.copy(
-                                    isLoading = false,
-                                    isRefreshing = false,
-                                    errorMsg = result.message
-                            )
+                        // Only show error if it's meaningful and not a silent background check
+                        if (!isSilent || !hasCache) {
+                            emitState {
+                                val state = replayState ?: HomeListState()
+                                state.copy(
+                                        isLoading = false,
+                                        isRefreshing = false,
+                                        errorMsg = result.message
+                                )
+                            }
+                        } else {
+                             emitState {
+                                replayState?.copy(isLoading = false, isRefreshing = false) ?: HomeListState()
+                            }
                         }
                     }
                 }
             }
         }
     }
-
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

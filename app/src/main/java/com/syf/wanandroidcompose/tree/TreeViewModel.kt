@@ -31,7 +31,7 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
             is TreeAction.LoadTree -> loadSystemTree()
             is TreeAction.LoadArticles -> loadSystemArticles(action.cid, action.page)
             is TreeAction.SelectCategory -> selectCategory(action.cid)
-            is TreeAction.ClickArticle -> toDetail(action.articleId, action.link)
+            is TreeAction.ClickArticle -> { /* 已经在 UI 层直接处理跳转，此处保留接口以防后用 */ }
             is TreeAction.LoadMore -> loadMoreArticles()
             is TreeAction.Refresh -> refreshArticles()
             is TreeAction.DetailNavigated ->
