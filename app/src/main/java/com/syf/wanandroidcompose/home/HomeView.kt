@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +29,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -54,6 +59,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -280,102 +286,114 @@ fun HomeView(navController: NavController) {
 
 @Composable
 fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(10.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Icon(
-            Icons.Filled.FavoriteBorder,
-            contentDescription = "",
+        Column(
             modifier = Modifier
-                .padding(5.dp)
-                .size(25.dp)
-                .align(Alignment.TopEnd),
-            tint =
-                if (item.collect) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Column(modifier = Modifier.padding(5.dp)) {
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (item.top == "1") {
-                    Text(
-                        text = stringResource(R.string.label_top),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(MaterialTheme.colorScheme.error)
-                            .padding(horizontal = 5.dp, vertical = 2.dp),
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onError,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                if (item.fresh) {
-                    Text(
-                        text = stringResource(R.string.label_new),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(MaterialTheme.colorScheme.tertiary)
-                            .padding(horizontal = 5.dp, vertical = 2.dp),
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onTertiary,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                // Author and Date
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
                 Text(
                     text = item.author.ifEmpty { item.shareUser },
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = item.niceDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = item.title,
-                fontWeight = FontWeight.W700,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(vertical = 8.dp)
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (item.superChapterName.isNotEmpty()) {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                                append(item.superChapterName)
-                            }
-                            append(" / ")
-                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
-                                append(item.chapterName)
-                            }
-                        },
+                if (item.top == "1") {
+                    Box(
                         modifier = Modifier
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outline,
-                                RoundedCornerShape(7.dp)
-                            )
-                            .padding(horizontal = 5.dp, vertical = 2.dp),
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
-                    )
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.label_top),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
+                if (item.fresh) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.label_new),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
+                Text(
+                    text = "${item.superChapterName} · ${item.chapterName}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Icon(
+                    imageVector = if (item.collect) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = "收藏",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (item.collect) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
             }
-            Text(
-                text = item.niceDate,
-                modifier = Modifier.padding(top = 5.dp),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

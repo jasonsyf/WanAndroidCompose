@@ -1,5 +1,6 @@
 package com.syf.wanandroidcompose
 
+import com.syf.wanandroidcompose.login.LoginScreen
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel // <- 添加这个导入
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -61,6 +63,12 @@ import com.syf.wanandroidcompose.tint.onPrimaryDark
 import com.syf.wanandroidcompose.tint.onPrimaryLight
 import com.syf.wanandroidcompose.tint.primaryDark
 import com.syf.wanandroidcompose.tint.primaryLight
+import com.syf.wanandroidcompose.project.ProjectViewModel // <- 添加这个导入
+import com.syf.wanandroidcompose.project.ProjectView // <- 添加这个导入
+import com.syf.wanandroidcompose.tree.TreeViewModel // <- 添加这个导入
+import com.syf.wanandroidcompose.tree.TreeView // <- 添加这个导入
+import com.syf.wanandroidcompose.profile.ProfileViewModel // <- 添加这个导入
+import com.syf.wanandroidcompose.profile.ProfileView // <- 添加这个导入
 import kotlinx.serialization.Serializable
 
 enum class AppDestinations(
@@ -142,6 +150,9 @@ fun AppMainView() {
                 if (url != null) {
                     DetailView(url = url, onBack = { rootNavController.popBackStack() })
                 }
+            }
+            composable("loginRegister") {
+                LoginScreen(onBack = { rootNavController.popBackStack() })
             }
         }
     }
@@ -331,18 +342,21 @@ fun HomeDestination(rootNavController: NavController) { // Directly use HomeView
 }
 
 @Composable
-fun ProjectDestination(rootNavController: NavController) { // Reuse HomeView for now as per previous logic
-    HomeView(rootNavController)
+fun ProjectDestination(rootNavController: NavController) {
+    val viewModel: ProjectViewModel = viewModel(factory = ProjectViewModel.Factory)
+    ProjectView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
 @Composable
 fun TreeDestination(rootNavController: NavController) {
-    HomeView(rootNavController)
+    val viewModel: TreeViewModel = viewModel(factory = TreeViewModel.Factory)
+    TreeView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
 @Composable
 fun ProfileDestination(rootNavController: NavController) {
-    HomeView(rootNavController)
+    val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
+    ProfileView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
 @Preview(showBackground = true)
