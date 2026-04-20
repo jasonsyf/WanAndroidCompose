@@ -26,6 +26,7 @@ data class TreeState(
     val isLoadingMore: Boolean = false,
     val hasMore: Boolean = true,
     val categories: List<TreeCategory> = emptyList(),
+    val allSubCategories: List<TreeCategory> = emptyList(), // Flattened subcategories for UI
     val selectedCid: Int = 0, // 当前选中的分类 ID
     val articles: List<ArticleData> = emptyList(),
     val errorMsg: String? = null,

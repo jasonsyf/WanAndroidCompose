@@ -307,12 +307,8 @@ fun AppTheme(
   if (!view.isInEditMode) {
       SideEffect {
           val window = (view.context as Activity).window
-          // 浅/深模式状态栏颜色做对调，提升视觉协调性
-          val swappedStatusBarColor = if (darkTheme) lightScheme.primary else darkScheme.primary
-          window.statusBarColor = swappedStatusBarColor.toArgb()
           val insetsController = WindowCompat.getInsetsController(window, view)
-          // 图标明暗也跟随对调
-          insetsController.isAppearanceLightStatusBars = darkTheme
+          insetsController.isAppearanceLightStatusBars = !darkTheme
       }
   }
 

@@ -50,21 +50,29 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                 .collect { result ->
                     when (result) {
                         is Result.Success -> {
+                            val categories = result.data.map { mapTreeDataToTreeCategory(it) }
+                            val allSubCategories = categories.flatMap { it.children }
+                            
+                            // If we don't have a selected CID yet, pick the first one
+                            if (currentCid == 0) {
+                                currentCid = allSubCategories.firstOrNull()?.id ?: categories.firstOrNull()?.id ?: 0
+                            }
+
                             emitState {
-                                val categories = result.data.map { mapTreeDataToTreeCategory(it) }
-                                currentCid = categories.firstOrNull()?.children?.firstOrNull()?.id ?: categories.firstOrNull()?.id ?: 0 // 默认选择第一个二级分类，如果没有则选择一级分类
                                 replayState?.copy(
                                     isLoading = false,
                                     categories = categories,
+                                    allSubCategories = allSubCategories,
                                     selectedCid = currentCid,
                                     errorMsg = null
                                 ) ?: TreeState(
                                     categories = categories,
+                                    allSubCategories = allSubCategories,
                                     selectedCid = currentCid
                                 )
                             }
-                            // 加载默认分类的文章
-                            if (currentCid != 0) {
+                            // Always ensure articles are loaded for the current CID
+                            if (currentCid != 0 && (replayState?.articles?.isEmpty() == true)) {
                                 sendAction(TreeAction.LoadArticles(currentCid, 0))
                             }
                         }
@@ -91,6 +99,11 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
     }
 
     private fun loadSystemArticles(cid: Int, page: Int) {
+        // Prevent loading if already loading the same content
+        val currentState = replayState ?: TreeState()
+        if (page > 0 && (currentState.isLoadingMore || !currentState.hasMore)) return
+        if (page == 0 && currentState.isLoading && currentState.selectedCid == cid && currentState.articles.isNotEmpty()) return
+
         if (!NetworkUtils.isNetworkAvailable(application)) {
             emitState {
                 val currentState = replayState ?: TreeState()

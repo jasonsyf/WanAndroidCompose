@@ -83,9 +83,8 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                 )
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    if (state.categories.isNotEmpty()) {
-                        val allSubCategories = state.categories.flatMap { it.children }
-                        val selectedIndex = allSubCategories.indexOfFirst { it.id == state.selectedCid }.takeIf { it >= 0 } ?: 0
+                    if (state.allSubCategories.isNotEmpty()) {
+                        val selectedIndex = state.allSubCategories.indexOfFirst { it.id == state.selectedCid }.takeIf { it >= 0 } ?: 0
                         ScrollableTabRow(
                             selectedTabIndex = selectedIndex,
                             modifier = Modifier
@@ -105,7 +104,7 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                                 }
                             }
                         ) {
-                            allSubCategories.forEachIndexed { index, category ->
+                            state.allSubCategories.forEachIndexed { index, category ->
                                 val selected = index == selectedIndex
                                 Tab(
                                     selected = selected,

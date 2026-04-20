@@ -1,0 +1,71 @@
+<resources>
+    <string name="app_name">WanAndroid-Compose</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_project">Project</string>
+    <string name="tab_tree">Tree</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="top_title_home">WanAndroid</string>
+    <string name="top_title_project">Open Source Projects</string>
+    <string name="top_title_tree">Knowledge Tree</string>
+    <string name="top_title_profile">Profile Center</string>
+
+    <string name="mode_system">System</string>
+    <string name="mode_light">Light</string>
+    <string name="mode_dark">Dark</string>
+
+    <string name="contrast_standard">Standard</string>
+    <string name="contrast_medium">Medium</string>
+    <string name="contrast_high">High</string>
+
+    <string name="font_system">System Font</string>
+    <string name="font_kaiti_like">Kai-like</string>
+    <string name="font_songti_like">Song-like</string>
+    <string name="font_serif">Serif</string>
+    <string name="font_monospace">Monospace</string>
+    <string name="menu_language">Language</string>
+    <string name="menu_theme_mode">Theme</string>
+    <string name="menu_contrast">Contrast</string>
+    <string name="menu_font">Font</string>
+
+    <string name="language_system">System Lang</string>
+    <string name="language_chinese">Chinese</string>
+    <string name="language_english">English</string>
+
+    <string name="section_quality_accounts">Featured Accounts</string>
+    <string name="label_no_more_data">No more data</string>
+    <string name="label_top">Top</string>
+    <string name="label_new">New</string>
+    <string name="label_all">All</string>
+    <string name="title_detail">Detail</string>
+    <string name="action_back">Back</string>
+    <string name="action_more_settings">More settings</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_load_more">Load More</string>
+    <string name="label_author_format">Author: %1$s</string>
+    <string name="search_result_format">Result %1$d: %2$s</string>
+    <string name="network_load_success_format">Loaded %1$d items successfully</string>
+    <string name="network_error_occurred_format">Error occurred: %1$s</string>
+    <string name="toast_login_success">Login successful</string>
+    <string name="toast_username_password_empty">Username or password cannot be empty</string>
+    <string name="toast_logout_success">Logged out</string>
+
+    <string name="error_request_failed">Request failed</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_data_loading">Data is loading</string>
+    <string name="error_data_empty">Data is empty</string>
+    <string name="error_network_unavailable">Network unavailable, please check your connection</string>
+    <string name="error_network_connection_failed">Network connection failed, please check settings</string>
+    <string name="error_network_timeout">Network request timed out, please try again later</string>
+    <string name="error_bad_request">Invalid request parameters</string>
+    <string name="error_unauthorized">Unauthorized, please sign in first</string>
+    <string name="error_forbidden">Access forbidden</string>
+    <string name="error_not_found">Requested resource not found</string>
+    <string name="error_server_internal">Internal server error</string>
+    <string name="error_bad_gateway">Bad gateway</string>
+    <string name="error_service_unavailable">Service unavailable</string>
+    <string name="error_network_code_format">Network error: %1$d</string>
+    <string name="error_network_exception">Network exception, please check your connection</string>
+</resources>

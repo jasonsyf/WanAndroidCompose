@@ -217,7 +217,7 @@ fun MainTabsScreen(
             title = {
                 Text(
                     text = stringResource(AppDestinations.entries[selectedItem].topTitleRes),
-                    color = syncedSystemBarContentColor
+                    style = MaterialTheme.typography.titleLarge
                 )
             }, // 在 actions 中放置右侧的搜索框
             actions = {
@@ -227,15 +227,13 @@ fun MainTabsScreen(
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
                             .size(35.dp),
-                        contentDescription = "Selected icon button",
-                        tint = syncedSystemBarContentColor
+                        contentDescription = "Selected icon button"
                     )
                 }
                 IconButton(onClick = { settingsMenuExpanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.action_more_settings),
-                        tint = syncedSystemBarContentColor
+                        contentDescription = stringResource(R.string.action_more_settings)
                     )
                 }
                 DropdownMenu(
@@ -288,9 +286,8 @@ fun MainTabsScreen(
                     )
                 }
             },
-            modifier = Modifier.background(syncedSystemBarColor),
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = syncedSystemBarColor
+                containerColor = MaterialTheme.colorScheme.surface
             ),
         )
     }, modifier = Modifier.padding(0.dp), bottomBar = {
