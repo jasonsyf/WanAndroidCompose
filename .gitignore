@@ -25,6 +25,7 @@ local.properties
 Thumbs.db
 
 # AI 工具 & 本地缓存 (关键清理项)
+AGENTS.md
 .claude/
 .gemini/
 .codeartsdoer/
