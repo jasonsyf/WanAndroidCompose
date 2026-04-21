@@ -2,6 +2,7 @@
 
 package com.syf.wanandroidcompose.home
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
