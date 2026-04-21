@@ -30,10 +30,10 @@ android {
 //
             // 推荐做法：使用环境变量或 local.properties 存储敏感信息
             // 示例：
-            storeFile = file(project.findProperty("KEYSTORE_FILE").toString())
-            storePassword = project.findProperty("KEYSTORE_PASSWORD").toString()
-            keyAlias = project.findProperty("KEY_ALIAS").toString()
-            keyPassword = project.findProperty("KEY_PASSWORD").toString()
+            storeFile = (System.getenv("KEYSTORE_FILE") ?: project.findProperty("KEYSTORE_FILE")?.toString())?.let { file(it) }
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: project.findProperty("KEYSTORE_PASSWORD")?.toString()
+            keyAlias = System.getenv("KEY_ALIAS") ?: project.findProperty("KEY_ALIAS")?.toString()
+            keyPassword = System.getenv("KEY_PASSWORD") ?: project.findProperty("KEY_PASSWORD")?.toString()
         }
     }
     defaultConfig {
