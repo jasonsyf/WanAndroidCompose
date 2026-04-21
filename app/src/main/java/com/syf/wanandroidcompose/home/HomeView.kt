@@ -1,10 +1,9 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.syf.wanandroidcompose.home // import androidx.compose.material.icons.Icons
-// import androidx.compose.material.icons.filled.FavoriteBorder
+package com.syf.wanandroidcompose.home
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -55,12 +55,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,35 +76,37 @@ import kotlinx.coroutines.delay
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+/**
+ * 首页主视图 Composable
+ * @param navController 导航控制器，用于页面跳转
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeView(navController: NavController) {
     val colorScheme = MaterialTheme.colorScheme
-    val bgColor = listOf(
-        colorScheme.primary,
-        colorScheme.secondary,
-        colorScheme.tertiary,
-        colorScheme.error,
-        colorScheme.primaryContainer,
-        colorScheme.secondaryContainer
-    )
+    val bgColor = listOf(colorScheme.primary, colorScheme.secondary, colorScheme.tertiary, colorScheme.error, colorScheme.primaryContainer, colorScheme.secondaryContainer)
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
     val state by viewModel.state.collectAsState(initial = HomeListState())
-    val listState = rememberLazyListState() // 初始数据加载由 ViewModel init 处理
-    // 监听跳转详情
-    LaunchedEffect(state.navigateToDetail) {
-        state.navigateToDetail?.let { url -> // URL 需要编码，防止参数中的特殊字符打断路由
-            val encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
-            navController.navigate("detail/$encodedUrl")
-            viewModel.sendAction(HomeAction.DetailNavigated)
-        }
-    }
+    val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.errorMsg) { state.errorMsg?.let { snackbarHostState.showSnackbar(it) } }
+    // 监听导航事件
+    LaunchedEffect(state.navigateToDetail) {
+        state.navigateToDetail?.let { url ->
+            val encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
+            navController.navigate("detail/$encodedUrl")
+            viewModel.sendAction(HomeAction.DetailNavigated) // 通知 ViewModel 导航已完成
+        }
+    }
+
+    // 监听错误消息以显示 Snackbar
+    LaunchedEffect(state.errorMsg) {
+        state.errorMsg?.let { snackbarHostState.showSnackbar(it) }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // 下拉刷新容器
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
             state = pullToRefreshState,
@@ -115,428 +114,391 @@ fun HomeView(navController: NavController) {
             modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
-                state = listState, modifier = Modifier
-                    .fillMaxSize()
-                    .background(colorScheme.background)
+                state = listState,
+                modifier = Modifier.fillMaxSize().background(colorScheme.background)
             ) {
+                // 轮播图
                 item {
                     if (state.getBannerData.isNotEmpty()) {
-                        Carouse(state.getBannerData)
-                    } else { // 轮播图占位符
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .padding(
-                                    top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp
-                                )
-                                .clip(RoundedCornerShape(12.dp))
-                                .placeholder(
-                                    visible = true, highlight = PlaceholderHighlight.shimmer()
-                                )
-                        )
-                    }
-                }
-                item {
-                    if (state.getBannerData.isNotEmpty()) {
-                        Text(
-                            stringResource(R.string.section_quality_accounts),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-                            fontSize = 25.sp,
-                            fontWeight = FontWeight.W700
-                        )
+                        Carouse(banners = state.getBannerData, onBannerClick = { url -> viewModel.sendAction(HomeAction.ClickArticle(url)) })
                     } else {
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 15.dp, vertical = 10.dp)
-                                .size(200.dp, 50.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .placeholder(
-                                    visible = true, highlight = PlaceholderHighlight.shimmer()
-                                )
-                        )
+                        // 轮播图占位符
+                        BannerPlaceholder()
                     }
                 }
+
+                // "优质公众号" 标题
+                item {
+                    if (state.getBannerData.isNotEmpty()) { // 用轮播图数据作为整体加载完成的判断依据
+                        SectionTitle(stringResource(R.string.section_quality_accounts))
+                    } else {
+                        SectionTitlePlaceholder()
+                    }
+                }
+
+                // 公众号列表
                 item {
                     LazyRow(modifier = Modifier.padding(5.dp)) {
-                        if (state.getPublicData.isNotEmpty()) { // ... existing code ...
-                            items(state.getPublicData.size) { i ->
-                                val item = state.getPublicData[i]
-                                Column(
-                                    Modifier
-                                        .padding(5.dp)
-                                        .size(60.dp, 80.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = item.name.firstOrNull()?.toString() ?: "",
-                                        modifier = Modifier
-                                            .clip(shape = CircleShape)
-                                            .size(60.dp)
-                                            .background(
-                                                color = bgColor[i % bgColor.size]
-                                            ),
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colorScheme.onPrimary,
-                                        textAlign = TextAlign.Center,
-                                        lineHeight = 60.sp
-                                    )
-                                    Text(
-                                        text = item.name,
-                                        maxLines = 1,
-                                        fontSize = 12.sp,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
+                        if (state.getPublicData.isNotEmpty()) {
+                            items(state.getPublicData) { item ->
+                                WeChatAccountItem(item, bgColor[state.getPublicData.indexOf(item) % bgColor.size])
                             }
-                        } else { // 公众号列表占位符
-                            items(10) {
-                                Column(
-                                    Modifier
-                                        .padding(5.dp)
-                                        .size(60.dp, 80.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(shape = CircleShape)
-                                            .size(60.dp)
-                                            .placeholder(
-                                                visible = true,
-                                                highlight = PlaceholderHighlight.shimmer()
-                                            )
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(top = 5.dp)
-                                            .size(40.dp, 12.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .placeholder(
-                                                visible = true,
-                                                highlight = PlaceholderHighlight.shimmer()
-                                            )
-                                    )
-                                }
-                            }
+                        } else {
+                            // 公众号列表占位符
+                            items(10) { WeChatAccountPlaceholder() }
                         }
                     }
-                } // ...
+                }
+
+                // 分类 Tab (粘性头部)
                 stickyHeader {
                     if (state.categories.isNotEmpty()) {
                         ChipTabRow(
                             tabs = state.categories,
                             selectedTabId = state.selectedCategoryId,
-                            onTabSelected = { id ->
-                                viewModel.sendAction(HomeAction.SelectCategory(id))
-                            })
-                    } else { // 设置鱼骨占位图
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 15.dp, vertical = 5.dp)
-                                .fillMaxWidth()
-                                .height(50.dp)
-                                .placeholder(
-                                    visible = true, highlight = PlaceholderHighlight.shimmer()
-                                )
+                            onTabSelected = { id -> viewModel.sendAction(HomeAction.SelectCategory(id)) }
                         )
+                    } else {
+                        // 分类 Tab 占位符
+                        ChipTabRowPlaceholder()
                     }
-                } // ... existing code ...
+                }
+
+                // 文章列表
                 if (state.getArticleData.isNotEmpty()) {
-                    items(state.getArticleData.size) { i ->
-                        val item = state.getArticleData[i]
+                    items(state.getArticleData, key = { it.id }) { item ->
                         ArticleItem(item) {
                             viewModel.sendAction(HomeAction.ClickArticle(item.link))
                         }
                     }
-                } else { // 文章列表骨架屏
+                } else {
+                    // 文章列表骨架屏
                     items(10) { ArticleSkeletonItem() }
-                } // 加载更多 Footer
+                }
+
+                // 加载更多 Footer
                 item {
-                    LaunchedEffect(Unit) {
-                        viewModel.sendAction(HomeAction.LoadMoreArticle)
+                    // 当列表滚动到底部时，触发加载更多
+                    LaunchedEffect(listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index) {
+                        if (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1) {
+                            viewModel.sendAction(HomeAction.LoadMoreArticle)
+                        }
                     }
 
                     if (state.getArticleData.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (state.isLoadingMore) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            } else if (!state.hasMore) {
-                                Text(
-                                        stringResource(R.string.label_no_more_data),
-                                        color = colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                        LoadMoreFooter(isLoading = state.isLoadingMore, hasMore = state.hasMore)
                     }
                 }
             }
         }
 
+        // 用于显示错误信息的 Snackbar
         SnackbarHost(
-            hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter)
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
 
+/**
+ * 文章列表项
+ */
 @Composable
 fun ArticleItem(item: ArticleData, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Author and Date
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = item.author.ifEmpty { item.shareUser },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            // 作者和日期行
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.Default.Person, contentDescription = "作者", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                Text(text = item.author.ifEmpty { item.shareUser }, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
                 Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = item.niceDate,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
+                Text(text = item.niceDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
+            // 标题
+            Text(text = item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            // 标签和分类行
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (item.top == "1") {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.label_top),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    TagLabel(stringResource(R.string.label_top), MaterialTheme.colorScheme.error)
                 }
                 if (item.fresh) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.label_new),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    TagLabel(stringResource(R.string.label_new), MaterialTheme.colorScheme.tertiary)
                 }
-                
-                Text(
-                    text = "${item.superChapterName} · ${item.chapterName}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-
+                CategoryLabel("${item.superChapterName} · ${item.chapterName}")
                 Spacer(modifier = Modifier.weight(1f))
-
-                Icon(
-                    imageVector = if (item.collect) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = "收藏",
-                    modifier = Modifier.size(20.dp),
-                    tint = if (item.collect) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
+                Icon(imageVector = if (item.collect) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = "收藏", modifier = Modifier.size(20.dp), tint = if (item.collect) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
             }
         }
     }
 }
 
+/**
+ * 轮播图 Composable
+ * @param banners 轮播图数据列表
+ * @param onBannerClick 点击轮播图的回调
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Carouse(banners: List<BannerData>) {
+fun Carouse(banners: List<BannerData>, onBannerClick: (String) -> Unit) {
     if (banners.isEmpty()) return
-    val curContext = LocalContext.current // 初始页面定在中间某个位置，保证左右都能滑
-    val initialPage = Int.MAX_VALUE / 2 // 修正初始页，使其对应数据列表的第一个元素 (index 0)
-    val startIndex = initialPage - (initialPage % banners.size)
-    val pagerState = rememberPagerState(initialPage = startIndex, pageCount = { Int.MAX_VALUE })
+    val context = LocalContext.current
+    // 初始页面定在中间，实现无限循环效果
+    val initialPage = Int.MAX_VALUE / 2 - (Int.MAX_VALUE / 2 % banners.size)
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { Int.MAX_VALUE })
 
     Box {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(top = 16.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().height(200.dp).padding(top = 16.dp, bottom = 8.dp),
             contentPadding = PaddingValues(horizontal = 0.dp)
-        ) { i ->
-            val actualIndex = i % banners.size
-            val item = banners[actualIndex] // 在真实应用中，使用 Coil 或 Glide 加载 imagePath
-            // 目前使用占位符，如果 URL 加载未设置，或者假设 Coil 可用？
-            // 因为没看到 Coil 用法，我将使用占位符以确保编译通过且逻辑功能正常，用户可能需要添加 Coil。
-            // 实际上，我可以检查 build.gradle...
+        ) { page ->
+            val actualIndex = page % banners.size
+            val item = banners[actualIndex]
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
+                    .fillMaxSize()
                     .padding(horizontal = 10.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // 占位颜色
+                    .clickable { onBannerClick(item.url) }
             ) {
-                val request = remember {
-                    ImageRequest.Builder(context = curContext).data(item.imagePath)
-                        .placeholder(R.drawable.ic_launcher_foreground).crossfade(true).build()
-                }
                 AsyncImage(
-                    model = request,
+                    model = ImageRequest.Builder(context).data(item.imagePath).crossfade(true).build(),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
-                ) // Text(item.title, Modifier.align(Alignment.Center))
-                // 如果有 Coil: AsyncImage(model = item.imagePath, ...)
-                // 目前保留结构但指示图片
-                //                                Image(
-                //                                        painter =
-                // painterResource(id =
-                // R.drawable.pig1), // 占位符
-                //                                        contentDescription =
-                // item.title,
-                //                                        contentScale =
-                // ContentScale.Crop,
-                //                                        modifier =
-                // Modifier.fillMaxSize()
-                //                                )
+                )
             }
-        } // 指示器
+        }
+        // 指示器
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .offset(0.dp, -10.dp)
-                .align(Alignment.BottomCenter),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
             val currentIndex = pagerState.currentPage % banners.size
             banners.forEachIndexed { index, _ ->
-                if (index == currentIndex) {
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .width(24.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(MaterialTheme.colorScheme.onSurface)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .width(8.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(
-                                MaterialTheme.colorScheme.onSurface.copy(
-                                    alpha = 0.4f
-                                )
-                            )
-                    )
-                }
+                val width by animateDpAsState(targetValue = if (index == currentIndex) 24.dp else 8.dp, label = "")
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .width(width)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (index == currentIndex) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                )
             }
         }
-    } // 自动滚动逻辑
+    }
+
+    // 自动滚动逻辑
     val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
-    LaunchedEffect(isDragged) {
-        if (!isDragged) {
+    if (!isDragged) {
+        LaunchedEffect(Unit) {
             while (true) {
                 delay(3000L)
-                try {
-                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                } catch (e: Exception) {
-                }
+                pagerState.animateScrollToPage(pagerState.currentPage + 1)
             }
         }
     }
 }
 
+/**
+ * 分类标签行
+ * @param tabs 分类数据列表
+ * @param selectedTabId 当前选中的 Tab ID
+ * @param onTabSelected Tab 选中回调
+ */
 @Composable
 fun ChipTabRow(tabs: List<CategoryUiModel>, selectedTabId: Int, onTabSelected: (Int) -> Unit) {
     if (tabs.isEmpty()) return
-
     LazyRow(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.background)
-            .fillMaxWidth()
-            .zIndex(1f)
-            .padding(vertical = 8.dp), contentPadding = PaddingValues(horizontal = 10.dp), // 两端留白
-        horizontalArrangement = Arrangement.spacedBy(12.dp) // 标签间距
+        modifier = Modifier.background(MaterialTheme.colorScheme.background).fillMaxWidth().zIndex(1f).padding(vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        itemsIndexed(tabs) { index, category ->
-            val isSelected = selectedTabId == category.id // 单个 Tab 的样式
+        items(tabs) { category ->
+            val isSelected = selectedTabId == category.id
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(18.dp)) // 圆角矩形
-                .background(
-                    if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceContainerHigh
-                )
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh)
                     .clickable { onTabSelected(category.id) }
                     .padding(horizontal = 25.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center) {
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     text = category.name,
-                    color =
-                        if (isSelected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 15.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
             }
+        }
+    }
+}
+
+/**
+ * 公众号 Item
+ */
+@Composable
+fun WeChatAccountItem(item: WeChatAccountData, color: Color) {
+    Column(
+        Modifier.padding(5.dp).size(60.dp, 80.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = item.name.firstOrNull()?.toString() ?: "",
+            modifier = Modifier.clip(shape = CircleShape).size(60.dp).background(color),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary,
+            textAlign = TextAlign.Center,
+            lineHeight = 60.sp
+        )
+        Text(
+            text = item.name,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
+ * 通用标签
+ */
+@Composable
+fun TagLabel(text: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(color.copy(alpha = 0.1f))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
+    }
+}
+
+/**
+ * 文章分类标签
+ */
+@Composable
+fun CategoryLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
+/**
+ * "加载更多"的底部视图
+ */
+@Composable
+fun LoadMoreFooter(isLoading: Boolean, hasMore: Boolean) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        } else if (!hasMore) {
+            Text(stringResource(R.string.label_no_more_data), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+// ----- 占位符和骨架屏 -----
+
+@Composable
+fun BannerPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .placeholder(visible = true, highlight = PlaceholderHighlight.shimmer())
+    )
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        title,
+        modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+        fontSize = 25.sp,
+        fontWeight = FontWeight.W700
+    )
+}
+
+@Composable
+fun SectionTitlePlaceholder() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 15.dp, vertical = 10.dp)
+            .size(200.dp, 50.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .placeholder(visible = true, highlight = PlaceholderHighlight.shimmer())
+    )
+}
+
+@Composable
+fun WeChatAccountPlaceholder() {
+    Column(
+        Modifier.padding(5.dp).size(60.dp, 80.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(modifier = Modifier.clip(shape = CircleShape).size(60.dp).placeholder(visible = true, highlight = PlaceholderHighlight.shimmer()))
+        Box(modifier = Modifier.padding(top = 5.dp).size(40.dp, 12.dp).clip(RoundedCornerShape(4.dp)).placeholder(visible = true, highlight = PlaceholderHighlight.shimmer()))
+    }
+}
+
+@Composable
+fun ChipTabRowPlaceholder() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 15.dp, vertical = 5.dp)
+            .fillMaxWidth()
+            .height(50.dp)
+            .placeholder(visible = true, highlight = PlaceholderHighlight.shimmer())
+    )
+}
+
+@Composable
+fun ArticleSkeletonItem() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(24.dp).clip(CircleShape).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.height(16.dp).weight(0.3f).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+            Spacer(modifier = Modifier.weight(0.7f))
+            Box(modifier = Modifier.height(12.dp).weight(0.2f).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(20.dp).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(modifier = Modifier.fillMaxWidth(0.5f).height(20.dp).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+        Spacer(modifier = Modifier.height(12.dp))
+        Row {
+            Box(modifier = Modifier.height(16.dp).weight(0.4f).placeholder(true, highlight = PlaceholderHighlight.shimmer()))
+            Spacer(modifier = Modifier.weight(0.6f))
         }
     }
 }
@@ -546,69 +508,5 @@ fun ChipTabRow(tabs: List<CategoryUiModel>, selectedTabId: Int, onTabSelected: (
 fun HomePreview() {
     WanAndroidComposeTheme {
         HomeView(rememberNavController())
-    }
-}
-
-// 文章列表鱼骨结构
-@Composable
-fun ArticleSkeletonItem() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(10.dp)
-    ) {
-        Column(modifier = Modifier.padding(5.dp)) { // Row for tags/author
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp, 16.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .placeholder(
-                            visible = true, highlight = PlaceholderHighlight.shimmer()
-                        )
-                )
-                Box(
-                    modifier = Modifier
-                        .size(60.dp, 16.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .placeholder(
-                            visible = true, highlight = PlaceholderHighlight.shimmer()
-                        )
-                )
-            } // Title
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .fillMaxWidth(0.7f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .placeholder(
-                        visible = true, highlight = PlaceholderHighlight.shimmer()
-                    )
-            ) // Chapter
-            Box(
-                modifier = Modifier
-                    .size(80.dp, 16.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .placeholder(
-                        visible = true, highlight = PlaceholderHighlight.shimmer()
-                    )
-            ) // Date
-            Box(
-                modifier = Modifier
-                    .padding(top = 5.dp)
-                    .size(100.dp, 12.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .placeholder(
-                        visible = true, highlight = PlaceholderHighlight.shimmer()
-                    )
-            )
-        }
     }
 }

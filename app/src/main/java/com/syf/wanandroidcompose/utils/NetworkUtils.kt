@@ -22,8 +22,8 @@ object NetworkUtils {
             val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
 
             return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            // Removed NET_CAPABILITY_VALIDATED as it can be slow to update and causes false negatives 
-            // especially during quick network transitions or on some carrier networks.
+            // 移除了 NET_CAPABILITY_VALIDATED 校验，因为它在网络快速切换或某些运营商网络下更新较慢，
+            // 容易导致误判（即明明有网但显示不可用）。
         } else {
             @Suppress("DEPRECATION") val networkInfo = connectivityManager.activeNetworkInfo
             @Suppress("DEPRECATION") return networkInfo?.isConnected == true

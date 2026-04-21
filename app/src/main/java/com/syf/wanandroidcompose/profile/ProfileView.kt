@@ -44,6 +44,20 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.syf.wanandroidcompose.theme.WanAndroidComposeTheme
 
+/**
+ * 个人中心页面视图
+ * 
+ * @param viewModel 业务逻辑
+ * @param rootNavController 导航控制器
+ * @param themeModeText 主题模式显示文本
+ * @param contrastText 对比度显示文本
+ * @param fontText 字体显示文本
+ * @param languageText 语言显示文本
+ * @param onToggleThemeMode 切换主题模式回调
+ * @param onToggleThemeContrast 切换对比度回调
+ * @param onToggleFontStyle 切换字体回调
+ * @param onToggleLanguage 切换语言回调
+ */
 @Composable
 fun ProfileView(
     viewModel: ProfileViewModel = viewModel(), 
@@ -59,6 +73,7 @@ fun ProfileView(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle(initialValue = ProfileState())
 
+    // 监听导航状态，跳转至登录注册
     LaunchedEffect(state.navigateToLoginRegister) {
         if (state.navigateToLoginRegister) {
             rootNavController.navigate("loginRegister")
@@ -74,7 +89,7 @@ fun ProfileView(
             .padding(horizontal = 20.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // User Header - Clean & Elegant
+        // 用户头部区域 - 简洁优雅的设计
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,6 +101,7 @@ fun ProfileView(
                 },
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 用户头像
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -103,7 +119,8 @@ fun ProfileView(
                     tint = if (state.isLogin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
+            // 用户名及欢迎语
             Column(modifier = Modifier.padding(start = 20.dp).weight(1f)) {
                 Text(
                     text = if (state.isLogin) state.username else "未登录",
@@ -118,7 +135,7 @@ fun ProfileView(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
@@ -129,7 +146,7 @@ fun ProfileView(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Settings Groups
+        // 设置分组
         SettingsGroup {
             ProfileMenuItem(
                 text = "我的收藏",
@@ -141,7 +158,7 @@ fun ProfileView(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
             text = "应用设置",
             style = MaterialTheme.typography.labelLarge,
@@ -150,6 +167,7 @@ fun ProfileView(
             modifier = Modifier.fillMaxWidth().padding(start = 8.dp, bottom = 8.dp)
         )
 
+        // 应用通用设置分组
         SettingsGroup {
             ProfileMenuItem(
                 text = "语言设置",
@@ -199,6 +217,9 @@ fun ProfileView(
     }
 }
 
+/**
+ * 设置项卡片分组容器
+ */
 @Composable
 fun SettingsGroup(content: @Composable () -> Unit) {
     Card(
@@ -213,6 +234,9 @@ fun SettingsGroup(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * 个人中心菜单单项
+ */
 @Composable
 fun ProfileMenuItem(
     text: String, 
@@ -229,6 +253,7 @@ fun ProfileMenuItem(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // 图标背景
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -243,7 +268,8 @@ fun ProfileMenuItem(
                 tint = iconTint
             )
         }
-        
+
+        // 菜单文本
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
@@ -251,9 +277,10 @@ fun ProfileMenuItem(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 16.dp)
         )
-        
+
         Spacer(modifier = Modifier.weight(1f))
-        
+
+        // 当前选中的值文本（可选）
         if (valueText != null) {
             Text(
                 text = valueText,
@@ -262,7 +289,8 @@ fun ProfileMenuItem(
                 modifier = Modifier.padding(end = 8.dp)
             )
         }
-        
+
+        // 右侧箭头图标
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,

@@ -6,13 +6,19 @@ import com.syf.wanandroidcompose.network.safeApiCall
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
+/**
+ * 体系模块数据仓库
+ * 负责获取体系结构和具体的体系文章列表
+ */
 class TreeRepository(private val apiService: TreeApiService) {
 
+    /** 体系树内存缓存 */
     private var cachedSystemTree: List<TreeData>? = null
 
     /**
      * 获取体系分类树
-     * 如果有缓存则返回缓存，否则从网络获取并缓存
+     * 优先返回内存缓存数据
+     * @return 包含体系树结果的 Flow
      */
     fun getSystemTree(): Flow<Result<List<TreeData>>> = flow {
         emit(Result.Loading)
@@ -31,8 +37,10 @@ class TreeRepository(private val apiService: TreeApiService) {
     }
 
     /**
-     * 获取体系文章列表
-     * 注意：体系文章列表页码从 0 开始
+     * 获取特定体系分类下的文章列表
+     * @param page 页码，从 0 开始
+     * @param cid 分类ID
+     * @return 包含文章列表结果的 Flow
      */
     fun getSystemArticles(page: Int, cid: Int): Flow<Result<List<ArticleData>>> = flow {
         emit(Result.Loading)

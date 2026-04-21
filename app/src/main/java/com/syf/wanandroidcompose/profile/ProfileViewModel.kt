@@ -9,11 +9,15 @@ import com.syf.wanandroidcompose.WanAndroidApplication
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
 import kotlinx.coroutines.launch
 
+/**
+ * 个人中心模块 ViewModel
+ * 负责用户信息的展示状态管理
+ */
 class ProfileViewModel(private val application: Application) :
     BaseViewModelOptimized<ProfileAction, ProfileState>() {
 
     init {
-        // 模拟加载用户数据，实际应该从 UserRepository 获取
+        // 初始状态，目前仅模拟用户信息。实际应结合 Repository/UserStore 观察登录态。
         emitState { ProfileState(username = "请登录", isLogin = false) }
     }
 
@@ -27,14 +31,16 @@ class ProfileViewModel(private val application: Application) :
         }
     }
 
+    /**
+     * 模拟加载个人资料
+     */
     private fun loadProfile() {
-        // 模拟加载逻辑
         viewModelScope.launch {
             emitState { replayState?.copy(isLoading = true) }
-            // 假设这里进行网络请求或读取本地数据
-            kotlinx.coroutines.delay(1000) // 模拟网络延迟
+            // 模拟网络请求或本地 IO
+            kotlinx.coroutines.delay(1000)
             emitState {
-                val isLoggedIn = false // 假设用户未登录
+                val isLoggedIn = false // 示例状态
                 replayState?.copy(
                     isLoading = false,
                     username = if (isLoggedIn) "用户昵称" else "请登录",
@@ -44,23 +50,32 @@ class ProfileViewModel(private val application: Application) :
         }
     }
 
+    /**
+     * 处理跳转到登录注册
+     */
     private fun navigateToLoginRegister() {
         emitState { replayState?.copy(navigateToLoginRegister = true) }
     }
 
+    /**
+     * 重置导航状态，防止重复跳转
+     */
     private fun resetLoginRegisterNavigation() {
         emitState { replayState?.copy(navigateToLoginRegister = false) }
     }
 
     private fun clickMyCollection() {
-        // TODO: 导航到我的收藏
+        // TODO: 导航至“我的收藏”页面
     }
 
     private fun clickSettings() {
-        // TODO: 导航到设置页面
+        // TODO: 导航至设置详情页面
     }
 
     companion object {
+        /**
+         * ViewModel 工厂
+         */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as WanAndroidApplication)

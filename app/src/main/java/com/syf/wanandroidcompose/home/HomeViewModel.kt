@@ -18,43 +18,52 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
+/**
+ * 首页 ViewModel
+ *
+ * 负责处理首页的业务逻辑，连接数据仓库 (Repository) 和 UI 视图 (View)。
+ */
 class HomeViewModel(private val repository: HomeRepository, private val application: Application) :
         BaseViewModelOptimized<HomeAction, HomeListState>() {
+
+    // 当前加载的文章页码
     private var currentPage = 0
 
-    // 维护所有加载的文章数据，用于前端筛选
+    // 内存中缓存的所有文章数据，用于前端的分类筛选
     private val allArticles = mutableListOf<ArticleData>()
 
-    init { // 观察本地数据库数据
+    init {
+        // 1. 订阅数据仓库中的聚合数据流
         viewModelScope.launch {
             repository.homeData.collectLatest { cachedData ->
+                // 更新内存缓存
                 allArticles.clear()
                 allArticles.addAll(cachedData.articles)
+                // 使用数据库的最新数据更新UI状态
                 updateStateWithHomeData(cachedData)
             }
-        } // 初始加载
+        }
+        // 2. 首次进入页面时，静默刷新一次数据
         refreshAllData(isFirstLoad = true, isSilent = true)
     }
 
-    /** 使用本地缓存更新状态，自动提取分类并应用当前筛选条件 */
+    /**
+     * 使用从数据库获取的缓存数据更新UI状态。
+     * @param cachedData 包含文章、轮播图、公众号的聚合数据。
+     */
     private fun updateStateWithHomeData(cachedData: HomeCachedData) {
         emitState {
-            val categories = extractCategories(cachedData.articles) // 应用当前筛选
-            val currentSelectedId = replayState?.selectedCategoryId ?: 0
-            val filteredList = filterArticles(cachedData.articles, currentSelectedId)
+            val categories = extractCategories(cachedData.articles) // 从文章中提取分类
+            val currentSelectedId = replayState?.selectedCategoryId ?: 0 // 获取当前选中的分类ID
+            val filteredList = filterArticles(cachedData.articles, currentSelectedId) // 应用分类筛选
 
-            replayState?.copy(
+            val currentState = replayState ?: HomeListState()
+            currentState.copy(
                     getArticleData = filteredList,
                     categories = categories,
                     getBannerData = cachedData.banners,
                     getPublicData = cachedData.weChatAccounts
             )
-                    ?: HomeListState(
-                            getArticleData = filteredList,
-                            categories = categories,
-                            getBannerData = cachedData.banners,
-                            getPublicData = cachedData.weChatAccounts
-                    )
         }
     }
 
@@ -65,45 +74,29 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
             is HomeAction.RefreshAllData -> refreshAllData(isFirstLoad = false, isSilent = false)
             is HomeAction.LoadMoreArticle -> loadMoreArticle()
             is HomeAction.SelectCategory -> selectCategory(action.categoryId)
-            is HomeAction.DetailNavigated ->
-                    emitState { replayState?.copy(navigateToDetail = null) }
-            // 已废弃的 Action - 数据现在通过 Flow 自动加载
-            is HomeAction.LoadPagerData -> {
-                /* 由 Flow 处理 */
-            }
-            is HomeAction.LoadPublic -> {
-                /* 由 Flow 处理 */
-            }
-            is HomeAction.LoadArticleData -> {
-                /* 由 Flow 处理 */
-            }
-            is HomeAction.LoadTab -> {
-                /* 由 Flow 处理 */
-            }
+            is HomeAction.DetailNavigated -> emitState { replayState?.copy(navigateToDetail = null) }
+            // 以下为已废弃的Action，因为数据加载已完全由Flow驱动
+            is HomeAction.LoadPagerData, is HomeAction.LoadPublic,
+            is HomeAction.LoadArticleData, is HomeAction.LoadTab -> { /* 由 Flow 自动处理 */ }
         }
     }
 
-    /** 跳转到文章详情页（临时方法） */
-    private fun tcDetail(articleId: String) {
-        emitState { replayState?.copy(navigateToDetail = articleId) }
-    }
-
-    /** 跳转到文章详情页 */
+    /**
+     * 设置状态以导航到文章详情页。
+     * @param articleId 文章链接URL。
+     */
     private fun toDetail(articleId: String) {
         emitState { replayState?.copy(navigateToDetail = articleId) }
     }
 
-    /** 加载用户文章（预留方法） */
+    /**
+     * 加载特定用户的文章（功能预留）。
+     */
     private fun loadUserArticle(userId: String) {}
 
-    /** 加载文章数据（兼容性方法） */
-    private fun loadArticleData() { // 兼容性方法，实际逻辑在 refreshAllData 中
-        refreshAllData(isFirstLoad = false, isSilent = true)
-    }
-
     /**
-     * 选择分类并筛选文章
-     * @param categoryId 分类 ID，0 表示全部
+     * 选择分类并根据分类ID筛选文章列表。
+     * @param categoryId 分类ID，0代表“全部”。
      */
     private fun selectCategory(categoryId: Int) {
         emitState {
@@ -113,25 +106,18 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
     }
 
     /**
-     * 根据分类 ID 筛选文章
-     * @param articles 待筛选的文章列表
-     * @param categoryId 分类 ID，0 表示全部
-     * @return 筛选后的文章列表
+     * 根据分类ID从文章列表中筛选文章。
+     * @return 筛选后的文章列表。
      */
     private fun filterArticles(articles: List<ArticleData>, categoryId: Int): List<ArticleData> {
-        return if (categoryId == 0) {
-            articles
-        } else {
-            articles.filter { it.superChapterId == categoryId }
-        }
+        return if (categoryId == 0) articles else articles.filter { it.superChapterId == categoryId }
     }
 
-    // 从文章列表中提取分类标签
+    /**
+     * 从文章列表中提取出不重复的分类信息。
+     */
     private fun extractCategories(articles: List<ArticleData>): List<CategoryUiModel> {
-        val categories = mutableListOf<CategoryUiModel>() // 默认添加"全部"
-        categories.add(
-                CategoryUiModel(application.getString(R.string.label_all), 0)
-        ) // 提取不重复的 superChapterName 和 superChapterId
+        val categories = mutableListOf(CategoryUiModel(application.getString(R.string.label_all), 0))
         val seenIds = mutableSetOf<Int>()
         articles.forEach { article ->
             val id = article.superChapterId
@@ -143,158 +129,93 @@ class HomeViewModel(private val repository: HomeRepository, private val applicat
         return categories
     }
 
-    private fun loadMoreArticle() { // 检查网络可用性
+    /**
+     * 加载更多文章。
+     */
+    private fun loadMoreArticle() {
         if (!NetworkUtils.isNetworkAvailable(application)) {
-            emitState {
-                replayState?.copy(
-                        isLoadingMore = false,
-                        errorMsg = application.getString(R.string.error_network_unavailable)
-                )
-            }
+            emitState { replayState?.copy(isLoadingMore = false, errorMsg = application.getString(R.string.error_network_unavailable)) }
             return
         }
-        val currentState = replayState ?: return
 
+        val currentState = replayState ?: return
         if (currentState.isLoadingMore || !currentState.hasMore) return
 
         currentPage++
 
         launchAction("LoadMoreArticle") {
-            repository
-                    .fetchMoreArticles(currentPage)
-                    .onStart {
-                        emitState {
-                            replayState?.copy(isLoadingMore = true, errorMsg = null)
-                                    ?: HomeListState(isLoadingMore = true)
+            repository.fetchMoreArticles(currentPage)
+                .onStart { emitState { replayState?.copy(isLoadingMore = true, errorMsg = null) } }
+                .collect { result ->
+                    when (result) {
+                        is Result.Loading -> { /* 在 onStart 中已处理 */ }
+                        is Result.Success -> {
+                            // 数据已通过 repository->local DB->Flow 自动更新到UI
+                            emitState { replayState?.copy(isLoadingMore = false, hasMore = !result.data.over, errorMsg = null) }
+                        }
+                        is Result.Error -> {
+                            currentPage-- // 加载失败，回滚页码
+                            emitState { replayState?.copy(isLoadingMore = false, errorMsg = result.message) }
                         }
                     }
-                    .collect { result ->
-                        when (result) {
-                            is Result.Loading -> { // 已在 onStart 中处理
-                            }
-                            is Result.Success -> { // 数据通过数据库 Flow 自动更新
-                                //  // local DB
-                                emitState {
-                                    replayState?.copy(
-                                            isLoadingMore = false,
-                                            hasMore = !result.data.over,
-                                            errorMsg = null
-                                    )
-                                            ?: HomeListState()
-                                }
-                            }
-                            is Result.Error -> {
-                                currentPage-- // Rollback page on error
-                                emitState {
-                                    replayState?.copy(
-                                            isLoadingMore = false,
-                                            errorMsg = result.message
-                                    )
-                                            ?: HomeListState()
-                                }
-                            }
-                        }
-                    }
+                }
         }
     }
 
-    private fun refreshAllData(isFirstLoad: Boolean, isSilent: Boolean = false) { 
+    /**
+     * 刷新所有首页数据（文章、轮播图、公众号）。
+     * @param isFirstLoad 是否是首次加载。
+     * @param isSilent 是否是静默刷新（不显示下拉刷新动画）。
+     */
+    private fun refreshAllData(isFirstLoad: Boolean, isSilent: Boolean = false) {
         val hasCache = allArticles.isNotEmpty()
-        val isNetworkAvailable = NetworkUtils.isNetworkAvailable(application)
-
-        if (!isNetworkAvailable) {
-            // Only show error if we have no cache and it's not a silent refresh
+        if (!NetworkUtils.isNetworkAvailable(application)) {
+            // 仅在没有缓存且非静默刷新时显示网络错误
             if (!hasCache && !isSilent) {
-                emitState {
-                    val currentState = replayState ?: HomeListState()
-                    currentState.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            errorMsg = application.getString(R.string.error_network_unavailable)
-                    )
-                }
-            }
-            // If we have cache, just stop refreshing animation silently
-            if (isSilent || hasCache) {
-                emitState {
-                    replayState?.copy(isLoading = false, isRefreshing = false) ?: HomeListState()
-                }
+                emitState { (replayState ?: HomeListState()).copy(isLoading = false, isRefreshing = false, errorMsg = application.getString(R.string.error_network_unavailable)) }
+            } else { // 如果有缓存或静默刷新，则只停止动画
+                emitState { (replayState ?: HomeListState()).copy(isLoading = false, isRefreshing = false) }
             }
             return
         }
 
-        // 重置分页
-        currentPage = 0
-        launchAction("RefreshFinish") {
+        currentPage = 0 // 重置分页
+        launchAction("RefreshAllData") {
             repository.refreshHomeData().collect { result ->
+                val currentState = replayState ?: HomeListState()
                 when (result) {
                     is Result.Loading -> {
-                        emitState {
-                            val defaultState = HomeListState(selectedCategoryId = 0)
-                            if (isFirstLoad && !hasCache) {
-                                replayState?.copy(
-                                        isLoading = true,
-                                        selectedCategoryId = 0,
-                                        errorMsg = null
-                                )
-                                        ?: defaultState.copy(isLoading = true)
-                            } else if (!isSilent) {
-                                replayState?.copy(
-                                        isRefreshing = true,
-                                        hasMore = true,
-                                        selectedCategoryId = 0,
-                                        errorMsg = null
-                                )
-                                        ?: defaultState.copy(isRefreshing = true, errorMsg = null)
-                            } else {
-                                replayState
-                            }
+                        val loadingState = when {
+                            isFirstLoad && !hasCache -> currentState.copy(isLoading = true, errorMsg = null)
+                            !isSilent -> currentState.copy(isRefreshing = true, hasMore = true, errorMsg = null)
+                            else -> currentState // 静默刷新，UI状态不变
                         }
+                        emitState { loadingState.copy(selectedCategoryId = 0) } // 重置分类
                     }
                     is Result.Success -> {
-                        emitState {
-                            val state = replayState ?: HomeListState()
-                            state.copy(
-                                    isLoading = false,
-                                    isRefreshing = false,
-                                    hasMore = result.data.hasMore ?: state.hasMore,
-                                    errorMsg = result.data.errorMessage
-                            )
-                        }
+                        emitState { currentState.copy(isLoading = false, isRefreshing = false, hasMore = result.data.hasMore ?: currentState.hasMore, errorMsg = result.data.errorMessage) }
                     }
                     is Result.Error -> {
-                        // Only show error if it's meaningful and not a silent background check
+                        // 仅在对用户有意义的情况下显示错误（非静默或无缓存）
                         if (!isSilent || !hasCache) {
-                            emitState {
-                                val state = replayState ?: HomeListState()
-                                state.copy(
-                                        isLoading = false,
-                                        isRefreshing = false,
-                                        errorMsg = result.message
-                                )
-                            }
+                            emitState { currentState.copy(isLoading = false, isRefreshing = false, errorMsg = result.message) }
                         } else {
-                             emitState {
-                                replayState?.copy(isLoading = false, isRefreshing = false) ?: HomeListState()
-                            }
+                            emitState { currentState.copy(isLoading = false, isRefreshing = false) }
                         }
                     }
                 }
             }
         }
     }
+
     companion object {
+        // ViewModel 工厂，用于创建 HomeViewModel 实例并注入依赖
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as WanAndroidApplication)
-                val remoteDataSource =
-                        HomeRemoteDataSource(RetrofitClient.create<HomeApiService>())
+                val remoteDataSource = HomeRemoteDataSource(RetrofitClient.create<HomeApiService>())
                 val localDataSource = HomeLocalDataSource(application.database.homeDao())
-                val repository =
-                        HomeRepository(
-                                remoteDataSource = remoteDataSource,
-                                localDataSource = localDataSource
-                        )
+                val repository = HomeRepository(remoteDataSource = remoteDataSource, localDataSource = localDataSource)
                 HomeViewModel(repository, application)
             }
         }

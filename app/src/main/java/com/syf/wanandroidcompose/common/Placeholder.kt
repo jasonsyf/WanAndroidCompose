@@ -27,7 +27,12 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.debugInspectorInfo
 
 /**
- * Custom implementation of Modifier.placeholder to replace deprecated Accompanist library.
+ * Modifier.placeholder 的自定义实现，用于替代已废弃的 Accompanist 库。
+ *
+ * @param visible 是否显示占位符。
+ * @param color 占位符的背景颜色。
+ * @param shape 占位符的形状。
+ * @param highlight 占位符的高亮效果，如闪烁。
  */
 fun Modifier.placeholder(
     visible: Boolean,
@@ -44,6 +49,7 @@ fun Modifier.placeholder(
         properties["highlight"] = highlight
     }) {
     if (!visible) return@composed this
+    // 如果颜色未指定，则使用主题中的颜色
     val resolvedColor =
         if (color == Color.Unspecified) {
             MaterialTheme.colorScheme.surfaceContainerHighest
@@ -54,13 +60,13 @@ fun Modifier.placeholder(
     val highlightBrush = highlight?.brush(infiniteTransition)
 
     Modifier.then(
-        Modifier.drawWithContent { // Placeholder covers the content, so we don't call drawContent()
-            val outline = shape.createOutline(size, layoutDirection, this) // Draw background color
+        Modifier.drawWithContent { // 占位符会覆盖内容，因此我们不调用 drawContent()
+            val outline = shape.createOutline(size, layoutDirection, this) // 绘制背景颜色
             drawOutline(
                 outline = outline,
                 color = resolvedColor,
-            ) // Draw highlight (Shimmer)
-            highlightBrush?.let { brush -> // Apply the shape to the shimmer as well
+            ) // 绘制高亮效果（闪烁）
+            highlightBrush?.let { brush -> // 同样为闪烁效果应用形状
                 drawIntoCanvas { canvas ->
                     canvas.save()
                     canvas.clipPath(Path().apply { addOutline(outline) })
@@ -71,6 +77,9 @@ fun Modifier.placeholder(
         })
 }
 
+/**
+ * 定义占位符高亮效果的接口。
+ */
 interface PlaceholderHighlight {
     @Composable
     fun brush(infiniteTransition: InfiniteTransition): Brush
@@ -79,8 +88,7 @@ interface PlaceholderHighlight {
 }
 
 /**
- * Creates a [PlaceholderHighlight] which fades in an out, between the
- * [highlightColor] and transparent.
+ * 创建一个渐隐渐现的 [PlaceholderHighlight] 效果，在高亮颜色和透明色之间过渡。
  */
 fun PlaceholderHighlight.Companion.shimmer(
     highlightColor: Color = Color.White.copy(alpha = 0.5f),
@@ -112,19 +120,19 @@ private data class Shimmer(
                     Color.Transparent,
                 ),
                 start = Offset(x = 0f, y = 0f),
-                end = Offset(x = Float.POSITIVE_INFINITY, y = Float.POSITIVE_INFINITY), // Diagonal
-                // Ideally this needs to be relative to the size drawn, but Brush.linearGradient
-                // is usually relative to the drawing area if not specified absolute.
-                // However, for moving shimmer, we need to shift coordinates.
-                // To keep it simple: we just assume a brush that works reasonably well.
-                // BUT, proper shimmer moves. 
-                // Let's implement a moving brush based on progress.
+                end = Offset(x = Float.POSITIVE_INFINITY, y = Float.POSITIVE_INFINITY), // 对角线
+                // 理想情况下，这需要相对于绘制的尺寸，但 Brush.linearGradient
+                // 如果没有指定绝对值，通常是相对于绘制区域的。
+                // 然而，对于移动的闪烁效果，我们需要平移坐标。
+                // 为简单起见：我们只假设一个效果合理的画刷。
+                // 但是，真正的闪烁效果是移动的。
+                // 让我们基于进度实现一个移动的画刷。
             )
         }
     }
 }
 
-// Fixed Shimmer Implementation that actually moves
+// 真正移动的闪烁效果实现
 private data class MovingShimmer(
     private val highlightColor: Color,
     private val animationSpec: InfiniteRepeatableSpec<Float>,
@@ -132,11 +140,11 @@ private data class MovingShimmer(
     @Composable
     override fun brush(infiniteTransition: InfiniteTransition): Brush {
         val effectOffset = infiniteTransition.animateFloat(
-            initialValue = 0f, targetValue = 1000f, // Arbitrary large pixel value for translation
+            initialValue = 0f, targetValue = 1000f, // 用于平移的任意大像素值
             animationSpec = animationSpec, label = "shimmer_offset"
-        ) // This is tricky because we don't know the size yet.
-        // A robust solution uses a Brush subclass or shader. 
-        // For simplicity, let's just make a gradient that is large enough.
+        ) // 这很棘手，因为我们还不知道尺寸。
+        // 一个健壮的解决方案是使用 Brush 的子类或着色器。
+        // 为简单起见，我们只创建一个足够大的渐变。
         return Brush.linearGradient(
             0.0f to Color.Transparent,
             0.5f to highlightColor,
@@ -169,7 +177,7 @@ fun PlaceholderHighlight.Companion.shimmerSimple(): PlaceholderHighlight =
         }
     }
 
-// Updating the main Shimmer function to use the simple implementation
+// 更新主 Shimmer 函数以使用简单的实现
 fun PlaceholderHighlight.Companion.shimmer(highlightColor: Color = Color.Unspecified) =
     object : PlaceholderHighlight {
         @Composable

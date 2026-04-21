@@ -38,37 +38,40 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
 import com.syf.wanandroidcompose.R
 
+/**
+ * 文章详情页视图，使用 WebView 加载网页。
+ * @param url 要加载的文章链接。
+ * @param title 初始标题，可选。
+ * @param onBack 返回按钮的回调。
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
     val defaultTitle = stringResource(R.string.title_detail)
     var webView: WebView? by remember { mutableStateOf(null) }
     var progress by remember { mutableFloatStateOf(0f) }
-    var pageTitle by remember {
-        mutableStateOf(
-            title ?: defaultTitle
-        )
-    }
+    var pageTitle by remember { mutableStateOf(title ?: defaultTitle) }
 
+    // 处理物理返回键
     BackHandler(enabled = true) {
         if (webView?.canGoBack() == true) {
-            webView?.goBack()
+            webView?.goBack() // 如果 WebView 可以后退，则在 WebView 内部后退
         } else {
-            onBack()
+            onBack() // 否则执行导航返回操作
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = pageTitle, 
-                        maxLines = 1, 
+                        text = pageTitle,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleMedium
-                    ) 
-                }, 
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -82,7 +85,7 @@ fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                windowInsets = TopAppBarDefaults.windowInsets // Ensure it handles status bars correctly
+                windowInsets = TopAppBarDefaults.windowInsets // 确保正确处理状态栏
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -92,14 +95,16 @@ fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // 显示加载进度条
             if (progress < 1f) {
                 LinearProgressIndicator(
-                    progress = { progress }, 
+                    progress = { progress },
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
             }
+            // 使用 AndroidView 嵌入原生 WebView
             AndroidView(
                 factory = { context ->
                     WebView(context).apply {
@@ -108,16 +113,13 @@ fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
                         settings.loadWithOverviewMode = true
                         settings.useWideViewPort = true
 
+                        // 监听网页加载进度和标题
                         webChromeClient = object : WebChromeClient() {
-                            override fun onProgressChanged(
-                                view: WebView?, newProgress: Int
-                            ) {
+                            override fun onProgressChanged(view: WebView?, newProgress: Int) {
                                 progress = newProgress / 100f
                             }
 
-                            override fun onReceivedTitle(
-                                view: WebView?, title: String?
-                            ) {
+                            override fun onReceivedTitle(view: WebView?, title: String?) {
                                 super.onReceivedTitle(view, title)
                                 if (!title.isNullOrEmpty()) {
                                     pageTitle = title
@@ -125,18 +127,18 @@ fun DetailView(url: String, title: String? = null, onBack: () -> Unit) {
                             }
                         }
 
+                        // 控制页面跳转
                         webViewClient = object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(
-                                view: WebView?, request: WebResourceRequest?
-                            ): Boolean {
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                // 默认在 WebView 内部处理跳转
                                 return super.shouldOverrideUrlLoading(view, request)
                             }
                         }
 
                         loadUrl(url)
-                        webView = this
+                        webView = this // 保存 WebView 实例
                     }
-                }, 
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }

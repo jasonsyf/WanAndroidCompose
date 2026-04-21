@@ -41,7 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // <- 添加这个导入
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -61,14 +61,20 @@ import com.syf.wanandroidcompose.tint.onPrimaryDark
 import com.syf.wanandroidcompose.tint.onPrimaryLight
 import com.syf.wanandroidcompose.tint.primaryDark
 import com.syf.wanandroidcompose.tint.primaryLight
-import com.syf.wanandroidcompose.project.ProjectViewModel // <- 添加这个导入
-import com.syf.wanandroidcompose.project.ProjectView // <- 添加这个导入
-import com.syf.wanandroidcompose.tree.TreeViewModel // <- 添加这个导入
-import com.syf.wanandroidcompose.tree.TreeView // <- 添加这个导入
-import com.syf.wanandroidcompose.profile.ProfileViewModel // <- 添加这个导入
-import com.syf.wanandroidcompose.profile.ProfileView // <- 添加这个导入
+import com.syf.wanandroidcompose.project.ProjectViewModel
+import com.syf.wanandroidcompose.project.ProjectView
+import com.syf.wanandroidcompose.tree.TreeViewModel
+import com.syf.wanandroidcompose.tree.TreeView
+import com.syf.wanandroidcompose.profile.ProfileViewModel
+import com.syf.wanandroidcompose.profile.ProfileView
 import kotlinx.serialization.Serializable
 
+/**
+ * 定义应用的底部导航目标页面
+ * @param labelRes 标签文本资源ID
+ * @param icon 图标
+ * @param topTitleRes 顶部标题资源ID
+ */
 enum class AppDestinations(
     val labelRes: Int,
     val icon: ImageVector,
@@ -86,16 +92,27 @@ object Profile
 @Serializable
 object FriendsList
 
+/**
+ * 应用主视图，包含根导航和主题设置
+ */
 @Composable
 fun AppMainView() {
+    // 创建根导航控制器
     val rootNavController = rememberNavController()
+    // 主题模式状态
     var themeMode by rememberSaveable { mutableStateOf(ThemeMode.SYSTEM) }
+    // 主题对比度状态
     var themeContrast by rememberSaveable { mutableStateOf(ThemeContrast.STANDARD) }
+    // 字体样式状态
     var fontStyle by rememberSaveable { mutableStateOf(AppFontStyle.SYSTEM) }
+    // 应用语言状态
     var appLanguage by rememberSaveable { mutableStateOf(currentAppLanguage()) }
 
+    // 应用当前主题
     AppTheme(themeMode = themeMode, contrast = themeContrast, fontStyle = fontStyle) {
+        // 设置导航路由
         NavHost(navController = rootNavController, startDestination = "tabs") {
+            // 主标签页屏幕
             composable("tabs") {
                 MainTabsScreen(
                     rootNavController = rootNavController,
@@ -104,6 +121,7 @@ fun AppMainView() {
                     fontStyle = fontStyle,
                     appLanguage = appLanguage,
                     onToggleThemeMode = {
+                        // 切换主题模式
                         themeMode = when (themeMode) {
                             ThemeMode.SYSTEM -> ThemeMode.LIGHT
                             ThemeMode.LIGHT -> ThemeMode.DARK
@@ -111,6 +129,7 @@ fun AppMainView() {
                         }
                     },
                     onToggleThemeContrast = {
+                        // 切换主题对比度
                         themeContrast = when (themeContrast) {
                             ThemeContrast.STANDARD -> ThemeContrast.MEDIUM
                             ThemeContrast.MEDIUM -> ThemeContrast.HIGH
@@ -118,6 +137,7 @@ fun AppMainView() {
                         }
                     },
                     onToggleFontStyle = {
+                        // 切换字体样式
                         fontStyle = when (fontStyle) {
                             AppFontStyle.SYSTEM -> AppFontStyle.KAITI_LIKE
                             AppFontStyle.KAITI_LIKE -> AppFontStyle.SONGTI_LIKE
@@ -127,6 +147,7 @@ fun AppMainView() {
                         }
                     },
                     onToggleLanguage = {
+                        // 切换应用语言
                         val nextLanguage =
                                 when (appLanguage) {
                                     AppLanguage.SYSTEM -> AppLanguage.ZH_CN
@@ -138,6 +159,7 @@ fun AppMainView() {
                     }
                 )
             }
+            // 详情页路由
             composable(
                 route = "detail/{url}", arguments = listOf(
                     navArgument("url") {
@@ -149,6 +171,7 @@ fun AppMainView() {
                     DetailView(url = url, onBack = { rootNavController.popBackStack() })
                 }
             }
+            // 登录注册页路由
             composable("loginRegister") {
                 LoginScreen(onBack = { rootNavController.popBackStack() })
             }
@@ -156,6 +179,9 @@ fun AppMainView() {
     }
 }
 
+/**
+ * 主标签页屏幕，包含顶部应用栏、底部导航和内容区域
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainTabsScreen(
@@ -168,26 +194,32 @@ fun MainTabsScreen(
     onToggleThemeContrast: () -> Unit,
     onToggleFontStyle: () -> Unit,
     onToggleLanguage: () -> Unit
-) { // 使用 selectedItem 作为单一状态源
-    var selectedItem by rememberSaveable { mutableIntStateOf(0) } // 搜索框输入状态
+) {
+    // 当前选中的标签页索引
+    var selectedItem by rememberSaveable { mutableIntStateOf(0) }
+    // 判断当前是否为深色模式
     val isDark = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
+    // 获取当前颜色方案
     val colorScheme = MaterialTheme.colorScheme
     val syncedSystemBarColor = if (isDark) primaryLight else primaryDark
     val syncedSystemBarContentColor = if (isDark) onPrimaryLight else onPrimaryDark
+    // 获取当前主题模式的文本描述
     val themeModeText = when (themeMode) {
         ThemeMode.SYSTEM -> stringResource(R.string.mode_system)
         ThemeMode.LIGHT -> stringResource(R.string.mode_light)
         ThemeMode.DARK -> stringResource(R.string.mode_dark)
     }
+    // 获取当前主题对比度的文本描述
     val contrastText = when (themeContrast) {
         ThemeContrast.STANDARD -> stringResource(R.string.contrast_standard)
         ThemeContrast.MEDIUM -> stringResource(R.string.contrast_medium)
         ThemeContrast.HIGH -> stringResource(R.string.contrast_high)
     }
+    // 获取当前字体样式的文本描述
     val fontText = when (fontStyle) {
         AppFontStyle.SYSTEM -> stringResource(R.string.font_system)
         AppFontStyle.KAITI_LIKE -> stringResource(R.string.font_kaiti_like)
@@ -195,12 +227,14 @@ fun MainTabsScreen(
         AppFontStyle.SERIF -> stringResource(R.string.font_serif)
         AppFontStyle.MONOSPACE -> stringResource(R.string.font_monospace)
     }
+    // 获取当前应用语言的文本描述
     val languageText = when (appLanguage) {
         AppLanguage.SYSTEM -> stringResource(R.string.language_system)
         AppLanguage.ZH_CN -> stringResource(R.string.language_chinese)
         AppLanguage.EN -> stringResource(R.string.language_english)
     }
 
+    // 自定义底部导航项的颜色
     val myNavigationItemColors = NavigationBarItemDefaults.colors(
         indicatorColor = Color.Transparent,
         selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -216,15 +250,15 @@ fun MainTabsScreen(
                     text = stringResource(AppDestinations.entries[selectedItem].topTitleRes),
                     style = MaterialTheme.typography.titleLarge
                 )
-            }, // 在 actions 中放置右侧的搜索框
-            actions = {
+            },
+            actions = { // 右侧操作按钮
                 IconButton(onClick = {}) {
                     Icon(
                         imageVector = Icons.Filled.Search,
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
                             .size(35.dp),
-                        contentDescription = "Selected icon button"
+                        contentDescription = "搜索按钮"
                     )
                 }
             },
@@ -237,11 +271,12 @@ fun MainTabsScreen(
             windowInsets = NavigationBarDefaults.windowInsets,
             containerColor = colorScheme.surfaceContainer
         ) {
+            // 遍历所有导航目标并创建底部导航项
             AppDestinations.entries.forEachIndexed { index, it ->
                 val isSelected = (selectedItem == index)
                 NavigationBarItem(
                     icon = {
-                    val iconSize by animateDpAsState(if (isSelected) 30.dp else 26.dp)
+                    val iconSize by animateDpAsState(if (isSelected) 30.dp else 26.dp, label = "")
                     Icon(
                         it.icon,
                         contentDescription = stringResource(it.labelRes),
@@ -249,19 +284,22 @@ fun MainTabsScreen(
                     )
                 }, label = {
                     val fontSize by animateFloatAsState(
-                        targetValue = if (isSelected) 15f else 13f
+                        targetValue = if (isSelected) 15f else 13f, label = ""
                     )
                     Text(text = stringResource(it.labelRes), fontSize = fontSize.sp)
-                }, selected = isSelected, onClick = { // 仅更新选中索引
+                }, selected = isSelected, onClick = {
+                    // 点击时仅更新选中的索引
                     selectedItem = index
                 }, colors = myNavigationItemColors
                 )
             }
         }
-    }) { contentPadding -> // 使用 contentPadding 包裹内容，防止底部导航遮挡
+    }) { contentPadding ->
+        // 使用 contentPadding 来避免内容被底部导航栏遮挡
         Box(modifier = Modifier.padding(contentPadding)) {
             val currentDestination =
-                AppDestinations.entries[selectedItem] // Pass rootNavController to destinations so they can navigate to full-screen detail
+                AppDestinations.entries[selectedItem]
+            // 根据当前选中的目标来显示不同的内容页面
             when (currentDestination) {
                 AppDestinations.HOME -> HomeDestination(rootNavController)
                 AppDestinations.PROJECT -> ProjectDestination(rootNavController)
@@ -274,6 +312,7 @@ fun MainTabsScreen(
                     appLanguage = appLanguage,
                     themeModeText = themeModeText,
                     contrastText = contrastText,
+
                     fontText = fontText,
                     languageText = languageText,
                     onToggleThemeMode = onToggleThemeMode,
@@ -286,26 +325,52 @@ fun MainTabsScreen(
     }
 }
 
+/**
+ * “首页”目标的 Composable
+ * @param rootNavController 根导航控制器，用于页面跳转
+ */
 @Composable
-fun HomeDestination(rootNavController: NavController) { // Directly use HomeView with the root controller.
-    // Assuming HomeView logic (LazyColumn etc) fits here.
-    // If Home had internal sub-pages, we'd need nested navigation,
-    // but for now it's just the feed -> detail (root).
+fun HomeDestination(rootNavController: NavController) {
+    // HomeView 负责展示首页的具体内容，如文章列表
     HomeView(rootNavController)
 }
 
+/**
+ * “项目”目标的 Composable
+ * @param rootNavController 根导航控制器
+ */
 @Composable
 fun ProjectDestination(rootNavController: NavController) {
     val viewModel: ProjectViewModel = viewModel(factory = ProjectViewModel.Factory)
     ProjectView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
+/**
+ * “体系”目标的 Composable
+ * @param rootNavController 根导航控制器
+ */
 @Composable
 fun TreeDestination(rootNavController: NavController) {
     val viewModel: TreeViewModel = viewModel(factory = TreeViewModel.Factory)
     TreeView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
+/**
+ * “我的”目标的 Composable
+ * @param rootNavController 根导航控制器
+ * @param themeMode 主题模式
+ * @param themeContrast 主题对比度
+ * @param fontStyle 字体样式
+ * @param appLanguage 应用语言
+ * @param themeModeText 主题模式文本
+ * @param contrastText 对比度文本
+ * @param fontText 字体文本
+ * @param languageText 语言文本
+ * @param onToggleThemeMode 切换主题模式的回调
+ * @param onToggleThemeContrast 切换主题对比度的回调
+ * @param onToggleFontStyle 切换字体样式的回调
+ * @param onToggleLanguage 切换语言的回调
+ */
 @Composable
 fun ProfileDestination(
     rootNavController: NavController,
@@ -324,7 +389,7 @@ fun ProfileDestination(
 ) {
     val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
     ProfileView(
-        viewModel = viewModel, 
+        viewModel = viewModel,
         rootNavController = rootNavController,
         themeModeText = themeModeText,
         contrastText = contrastText,
@@ -337,6 +402,9 @@ fun ProfileDestination(
     )
 }
 
+/**
+ * Composable 预览
+ */
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

@@ -15,14 +15,20 @@ import com.syf.wanandroidcompose.utils.NetworkUtils
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
+/**
+ * 体系模块 ViewModel
+ * 负责处理体系分类及其下文章列表的分页加载、分类切换等逻辑
+ */
 class TreeViewModel(private val repository: TreeRepository, private val application: Application) :
     BaseViewModelOptimized<TreeAction, TreeState>() {
 
-    private var currentPage = 0 // 体系文章列表页码从 0 开始
-    private var currentCid = 0 // 当前选中的分类 ID
+    // 体系文章列表页码从 0 开始
+    private var currentPage = 0
+    // 当前选中的子分类 ID
+    private var currentCid = 0
 
     init {
-        // 初始加载体系分类
+        // 初始加载体系结构
         sendAction(TreeAction.LoadTree)
     }
 
@@ -39,6 +45,9 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         }
     }
 
+    /**
+     * 加载体系结构树
+     */
     private fun loadSystemTree() {
         launchAction("LoadSystemTree") {
             repository.getSystemTree()
@@ -50,10 +59,12 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                 .collect { result ->
                     when (result) {
                         is Result.Success -> {
+                            // 转换原始数据为 UI 模型
                             val categories = result.data.map { mapTreeDataToTreeCategory(it) }
+                            // 展平所有子分类，方便在 TabRow 中展示
                             val allSubCategories = categories.flatMap { it.children }
                             
-                            // If we don't have a selected CID yet, pick the first one
+                            // 默认选择第一个可用的 CID
                             if (currentCid == 0) {
                                 currentCid = allSubCategories.firstOrNull()?.id ?: categories.firstOrNull()?.id ?: 0
                             }
@@ -71,7 +82,7 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                                     selectedCid = currentCid
                                 )
                             }
-                            // Always ensure articles are loaded for the current CID
+                            // 成功加载分类后，如果文章列表为空，则触发首次加载文章
                             if (currentCid != 0 && (replayState?.articles?.isEmpty() == true)) {
                                 sendAction(TreeAction.LoadArticles(currentCid, 0))
                             }
@@ -90,6 +101,9 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         }
     }
 
+    /**
+     * 映射原始接口数据到 UI 模型（递归处理子分类）
+     */
     private fun mapTreeDataToTreeCategory(treeData: TreeData): TreeCategory {
         return TreeCategory(
             id = treeData.id,
@@ -98,9 +112,14 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         )
     }
 
+    /**
+     * 加载体系下的文章列表
+     * @param cid 子分类ID
+     * @param page 页码
+     */
     private fun loadSystemArticles(cid: Int, page: Int) {
-        // Prevent loading if already loading the same content
         val currentState = replayState ?: TreeState()
+        // 避免重复加载
         if (page > 0 && (currentState.isLoadingMore || !currentState.hasMore)) return
         if (page == 0 && currentState.isLoading && currentState.selectedCid == cid && currentState.articles.isNotEmpty()) return
 
@@ -120,7 +139,6 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         launchAction("LoadSystemArticles") {
             repository.getSystemArticles(page, cid)
                 .onStart {
-                    // 如果是第一页加载，则显示全屏加载或刷新状态
                     if (page == 0) {
                         emitState {
                             if (replayState?.isRefreshing == true) {
@@ -129,7 +147,7 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                                 replayState?.copy(isLoading = true, articles = emptyList(), errorMsg = null)
                             }
                         }
-                    } else { // 加载更多
+                    } else {
                         emitState {
                             replayState?.copy(isLoadingMore = true, errorMsg = null)
                         }
@@ -149,7 +167,7 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                                     isRefreshing = false,
                                     isLoadingMore = false,
                                     articles = currentArticles,
-                                    hasMore = result.data.isNotEmpty(), // TODO: need to get this from API
+                                    hasMore = result.data.isNotEmpty(),
                                     errorMsg = null
                                 ) ?: TreeState(
                                     articles = currentArticles,
@@ -158,7 +176,7 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
                             }
                         }
                         is Result.Error -> {
-                            if (page > 0) currentPage-- // 加载更多失败，页码回退
+                            if (page > 0) currentPage--
                             emitState {
                                 replayState?.copy(
                                     isLoading = false,
@@ -174,8 +192,11 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         }
     }
 
+    /**
+     * 选择子分类
+     */
     private fun selectCategory(cid: Int) {
-        if (currentCid == cid) return // 如果选择了相同的分类，则不刷新
+        if (currentCid == cid) return
         currentCid = cid
         currentPage = 0
         emitState {
@@ -184,10 +205,16 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         sendAction(TreeAction.LoadArticles(currentCid, currentPage))
     }
 
+    /**
+     * 设置详情页导航状态
+     */
     private fun toDetail(articleId: String, link: String) {
         emitState { replayState?.copy(navigateToDetail = link) }
     }
 
+    /**
+     * 加载更多
+     */
     private fun loadMoreArticles() {
         val currentState = replayState ?: return
         if (currentState.isLoadingMore || !currentState.hasMore) return
@@ -196,6 +223,9 @@ class TreeViewModel(private val repository: TreeRepository, private val applicat
         sendAction(TreeAction.LoadArticles(currentCid, currentPage))
     }
 
+    /**
+     * 下拉刷新
+     */
     private fun refreshArticles() {
         currentPage = 0
         emitState {

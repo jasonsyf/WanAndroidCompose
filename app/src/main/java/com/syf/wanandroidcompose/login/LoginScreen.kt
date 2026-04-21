@@ -32,32 +32,42 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.syf.wanandroidcompose.theme.WanAndroidComposeTheme
 
+/**
+ * 登录注册屏幕视图
+ * 
+ * @param viewModel 登录业务逻辑
+ * @param onBack 返回上一页的回调
+ */
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory), onBack: () -> Unit) {
+    // 订阅 UI 状态流
     val state by viewModel.state.collectAsStateWithLifecycle(initialValue = LoginState())
+    // Snackbar 状态
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    // 错误消息监听与展示
     LaunchedEffect(key1 = state.errorMsg) {
         state.errorMsg?.let { msg ->
             snackbarHostState.showSnackbar(msg)
         }
     }
 
+    // 登录成功后的处理
     LaunchedEffect(key1 = state.loginSuccess) {
         if (state.loginSuccess) {
             snackbarHostState.showSnackbar("登录成功")
-            onBack()
+            onBack() // 返回上一页
             viewModel.sendAction(LoginAction.Navigated)
         }
     }
 
+    // 注册成功后的处理
     LaunchedEffect(key1 = state.registerSuccess) {
         if (state.registerSuccess) {
             snackbarHostState.showSnackbar("注册成功")
             viewModel.sendAction(LoginAction.Navigated)
-            // 注册成功后可以自动登录或者跳转到登录页面
-            // 这里我们假设注册成功后停留在当前页面，等待用户手动登录
+            // 注册成功后可在此自动登录或跳转
         }
     }
 
@@ -76,6 +86,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.F
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
+            // 用户名输入框
             OutlinedTextField(
                 value = state.usernameInput,
                 onValueChange = { viewModel.sendAction(LoginAction.InputUsername(it)) },
@@ -87,6 +98,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.F
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 密码输入框
             OutlinedTextField(
                 value = state.passwordInput,
                 onValueChange = { viewModel.sendAction(LoginAction.InputPassword(it)) },
@@ -99,6 +111,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.F
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // 登录按钮
             Button(
                 onClick = { viewModel.sendAction(LoginAction.ClickLogin) },
                 modifier = Modifier.fillMaxWidth(),
@@ -113,6 +126,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.F
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 注册按钮
             Button(
                 onClick = { viewModel.sendAction(LoginAction.ClickRegister) },
                 modifier = Modifier.fillMaxWidth(),

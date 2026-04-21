@@ -9,6 +9,10 @@ import com.syf.wanandroidcompose.home.ArticleTag
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+/**
+ * 文章数据在 Room 数据库中的实体类。
+ * @property tags 使用了 TypeConverter 将 List<ArticleTag> 转换为 String 进行存储。
+ */
 @Entity(tableName = "articles")
 @TypeConverters(ArticleTypeConverters::class)
 data class ArticleEntity(
@@ -29,6 +33,9 @@ data class ArticleEntity(
     val tags: List<ArticleTag>
 )
 
+/**
+ * 将网络数据模型 `ArticleData` 转换为数据库实体模型 `ArticleEntity`。
+ */
 fun ArticleData.toEntity(): ArticleEntity {
     return ArticleEntity(
         id = id,
@@ -49,6 +56,9 @@ fun ArticleData.toEntity(): ArticleEntity {
     )
 }
 
+/**
+ * 将数据库实体模型 `ArticleEntity` 转换为网络数据模型 `ArticleData`。
+ */
 fun ArticleEntity.toData(): ArticleData {
     return ArticleData(
         id = id,
@@ -69,14 +79,20 @@ fun ArticleEntity.toData(): ArticleData {
     )
 }
 
+/**
+ * Room 的类型转换器，用于在 `List<ArticleTag>` 和 `String` 之间进行转换。
+ * Room 本身不支持直接存储复杂对象列表，需要通过这种方式序列化为 JSON 字符串进行存储。
+ */
 class ArticleTypeConverters {
+    private val json = Json { ignoreUnknownKeys = true } // 配置 Json 解析器
+
     @TypeConverter
     fun fromTags(tags: List<ArticleTag>): String {
-        return Json.encodeToString(tags)
+        return json.encodeToString(tags)
     }
 
     @TypeConverter
     fun toTags(data: String): List<ArticleTag> {
-        return if (data.isEmpty()) emptyList() else Json.decodeFromString(data)
+        return if (data.isEmpty()) emptyList() else json.decodeFromString(data)
     }
 }

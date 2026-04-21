@@ -15,16 +15,22 @@ import com.syf.wanandroidcompose.utils.NetworkUtils
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
+/**
+ * 项目模块 ViewModel
+ * 负责处理项目分类加载、项目列表分页加载及分类切换逻辑
+ */
 class ProjectViewModel(private val repository: ProjectRepository, private val application: Application) :
     BaseViewModelOptimized<ProjectAction, ProjectState>() {
 
-    private var currentPage = 1 // 项目列表页码从 1 开始
-    private var currentCid = 0 // 当前选中的分类 ID
+    // 当前加载的项目列表页码，从 1 开始
+    private var currentPage = 1
+    // 当前选中的项目分类 ID
+    private var currentCid = 0
 
     init {
-        // 初始加载项目分类
+        // 初始加载：获取项目分类树
         sendAction(ProjectAction.LoadTree)
-        // 初始加载项目列表 (默认全部或第一个分类)
+        // 初始加载：加载默认分类的项目列表
         sendAction(ProjectAction.LoadProjects(currentCid, currentPage))
     }
 
@@ -41,10 +47,14 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         }
     }
 
+    /**
+     * 加载项目分类树数据
+     */
     private fun loadProjectTree() {
         launchAction("LoadProjectTree") {
             repository.getProjectTree()
                 .onStart {
+                    // 开始加载时更新状态，显示加载中
                     emitState {
                         replayState?.copy(isLoading = true, errorMsg = null) ?: ProjectState(isLoading = true)
                     }
@@ -54,7 +64,8 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                         is Result.Success -> {
                             emitState {
                                 val categories = result.data.map { ProjectCategory(it.id, it.name) }
-                                currentCid = categories.firstOrNull()?.id ?: 0 // 默认选择第一个分类
+                                // 默认选择第一个分类
+                                currentCid = categories.firstOrNull()?.id ?: 0
                                 replayState?.copy(
                                     isLoading = false,
                                     categories = categories,
@@ -65,7 +76,7 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                                     selectedCid = currentCid
                                 )
                             }
-                            // 加载第一个分类的项目
+                            // 成功获取分类后，自动加载第一个分类的项目内容
                             if (currentCid != 0) {
                                 sendAction(ProjectAction.LoadProjects(currentCid, 1))
                             }
@@ -84,10 +95,17 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         }
     }
 
+    /**
+     * 加载特定分类的项目列表数据
+     * @param cid 分类ID
+     * @param page 页码
+     * @param isSilent 是否为静默加载（不触发 UI 加载状态变化）
+     */
     private fun loadProjects(cid: Int, page: Int, isSilent: Boolean = false) {
         val hasCache = (replayState?.projects?.isNotEmpty() == true)
         val isNetworkAvailable = NetworkUtils.isNetworkAvailable(application)
 
+        // 无网络处理
         if (!isNetworkAvailable) {
             if (!hasCache && !isSilent) {
                 emitState {
@@ -111,8 +129,8 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         launchAction("LoadProjects") {
             repository.getProjectList(page, cid)
                 .onStart {
-                    // 如果是第一页加载，且没有缓存，则显示全屏加载
-                    if (page == 1) {
+                    // 根据不同的加载场景更新 UI 状态
+                    if (page == 1) { // 刷新或首次加载
                         emitState {
                             if (replayState?.isRefreshing == true || isSilent || hasCache) {
                                 replayState?.copy(errorMsg = null)
@@ -131,9 +149,9 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                         is Result.Success -> {
                             emitState {
                                 val currentProjects = if (page == 1) {
-                                    result.data
+                                    result.data // 首页则替换
                                 } else {
-                                    replayState?.projects.orEmpty() + result.data
+                                    replayState?.projects.orEmpty() + result.data // 否则追加
                                 }
                                 replayState?.copy(
                                     isLoading = false,
@@ -149,7 +167,7 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                             }
                         }
                         is Result.Error -> {
-                            if (page > 1) currentPage-- // 加载更多失败，页码回退
+                            if (page > 1) currentPage-- // 加载更多失败时回退页码
                             if (!isSilent || !hasCache) {
                                 emitState {
                                     replayState?.copy(
@@ -171,20 +189,30 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         }
     }
 
+    /**
+     * 切换选中的项目分类
+     */
     private fun selectCategory(cid: Int) {
-        if (currentCid == cid) return // 如果选择了相同的分类，则不刷新
+        if (currentCid == cid) return // 相同分类无需处理
         currentCid = cid
         currentPage = 1
         emitState {
             replayState?.copy(selectedCid = cid, projects = emptyList(), hasMore = true)
         }
+        // 切换后立即加载新分类的第一页数据
         sendAction(ProjectAction.LoadProjects(currentCid, currentPage))
     }
 
+    /**
+     * 设置导航到详情页的状态
+     */
     private fun toDetail(articleId: String, link: String) {
         emitState { replayState?.copy(navigateToDetail = link) }
     }
 
+    /**
+     * 处理“加载更多”操作
+     */
     private fun loadMoreProjects() {
         val currentState = replayState ?: return
         if (currentState.isLoadingMore || !currentState.hasMore) return
@@ -194,6 +222,9 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         loadProjects(currentCid, currentPage, isSilent = false)
     }
 
+    /**
+     * 处理“下拉刷新”操作
+     */
     private fun refreshProjects() {
         currentPage = 1
         emitState {
@@ -203,6 +234,9 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
     }
 
     companion object {
+        /**
+         * ViewModel 工厂，用于创建包含依赖的 ProjectViewModel
+         */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as WanAndroidApplication)

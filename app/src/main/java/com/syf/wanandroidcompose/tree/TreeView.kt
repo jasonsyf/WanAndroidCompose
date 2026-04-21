@@ -48,12 +48,23 @@ import kotlinx.coroutines.flow.collectLatest
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+/**
+ * 体系页面视图
+ * 展示体系二级分类 Tab 栏和对应的文章列表
+ * 
+ * @param viewModel 体系业务逻辑
+ * @param rootNavController 根导航控制器
+ */
 @Composable
 fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavController) {
+    // 订阅 UI 状态
     val state by viewModel.state.collectAsStateWithLifecycle(initialValue = TreeState())
+    // Snackbar 状态
     val snackbarHostState = remember { SnackbarHostState() }
+    // 下拉刷新状态
     val pullToRefreshState = rememberPullToRefreshState()
 
+    // 错误消息提示
     LaunchedEffect(key1 = state.errorMsg) {
         state.errorMsg?.let { msg ->
             snackbarHostState.showSnackbar(msg)
@@ -69,6 +80,7 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // 初始加载动画
             if (state.isLoading && state.categories.isEmpty()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
@@ -76,6 +88,7 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                 )
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // 体系二级分类 Tab 栏
                     if (state.allSubCategories.isNotEmpty()) {
                         val selectedIndex = state.allSubCategories.indexOfFirst { it.id == state.selectedCid }.takeIf { it >= 0 } ?: 0
                         ScrollableTabRow(
@@ -97,6 +110,7 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                                 }
                             }
                         ) {
+                            // 渲染子分类 Tab
                             state.allSubCategories.forEachIndexed { index, category ->
                                 val selected = index == selectedIndex
                                 Tab(
@@ -115,12 +129,14 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                         }
                     }
 
+                    // 下拉刷新区域
                     PullToRefreshBox(
                         isRefreshing = state.isRefreshing,
                         onRefresh = { viewModel.sendAction(TreeAction.Refresh) },
                         state = pullToRefreshState,
                         modifier = Modifier.fillMaxSize()
                     ) {
+                        // 空数据展示
                         if (state.articles.isEmpty() && !state.isLoading && !state.isRefreshing) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text(
@@ -130,6 +146,7 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                                 )
                             }
                         } else {
+                            // 文章列表
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
@@ -140,17 +157,19 @@ fun TreeView(viewModel: TreeViewModel = viewModel(), rootNavController: NavContr
                                     key = { index -> state.articles[index].id }
                                 ) { index ->
                                     val article = state.articles[index]
+                                    // 点击跳转详情
                                     ArticleItem(item = article, onClick = {
-                                        // 直接执行跳转逻辑，消除状态流转的延迟感
                                         val encodedUrl = URLEncoder.encode(article.link, StandardCharsets.UTF_8.toString())
                                         rootNavController.navigate("detail/$encodedUrl")
                                     })
+                                    // 自动加载更多
                                     if (index == state.articles.size - 1 && !state.isLoadingMore && state.hasMore) {
-                                        LaunchedEffect(article.id) { // 绑定 ID 防止重复触发
+                                        LaunchedEffect(article.id) {
                                             viewModel.sendAction(TreeAction.LoadMore)
                                         }
                                     }
                                 }
+                                // 加载更多动画
                                 if (state.isLoadingMore) {
                                     item {
                                         Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
