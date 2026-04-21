@@ -1,18 +1,27 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+/.idea/
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
-local.properties
-/.idea/
-/.kotlin/
-/.kotlin/errors/
+
+# Kotlin
+.kotlin/
+
+# Local Tooling & Cache
+.claude/
+.codeartsdoer/
+.gemini/
+*.log
+
+# Dependencies
+node_modules/
+package-lock.json
+package.json
+
+# Build Artifacts
+app/release/
+app/build/
