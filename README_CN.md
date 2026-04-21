@@ -18,14 +18,16 @@
 ## ✨ 特性
 
 - 🎨 **现代化 UI** - 完全使用 Jetpack Compose 和 Material Design 3 构建。
-- 🏗️ **MVI 架构** - 单向数据流，通过 `BaseViewModelOptimized` 实现强大的状态管理。
+- 🏗️ **MVI 架构** - 单向数据流，通过 `BaseViewModelOptimized` 实现强大的状态管理（StateFlow + Channel）。
 - 💾 **离线优先** - Room 数据库配合 Paging 3 支持，实现无缝本地缓存。
 - 🔄 **响应式编程** - 广泛使用 Kotlin Flow 和协程处理异步逻辑。
-- 🌐 **网络层** - Retrofit + OkHttp 自定义拦截器，集成 Chucker 用于网络调试。
+- 🌐 **网络层** - Retrofit + OkHttp 自定义拦截器，集成 `Result<T>` 封装。
 - 🌈 **动态主题** - 支持多种主题模式（亮色/暗色/系统）、对比度等级和自定义字体样式。
 - 🌍 **多语言支持** - 内置中英文切换。
-- 📱 **响应式导航** - 使用 Material 3 Adaptive Navigation Suite，适配不同屏幕尺寸。
-- 🔧 **依赖注入** - 使用 Hilt 保持代码整洁且易于测试。
+- 🚀 **自动化工作流**:
+    - **CI (Build & Test)**: 每次推送均会自动进行 Lint 检查与编译验证。
+    - **CD (Auto Release)**: 通过 Git Tag (`v*`) 触发自动签名与 GitHub Release 发布。
+- 🤖 **AI 协作**: 专为 Gemini CLI 优化，内置 `AGENTS.md` 智能助手指南。
 
 ## 📂 功能模块
 
@@ -40,41 +42,32 @@
 ### 核心
 - **Jetpack Compose** - 现代化声明式 UI 框架。
 - **Navigation Compose** - 类型安全导航。
-- **Hilt** - 依赖注入。
+- **Manual DI** - 使用 `WanAndroidApplication` 结合 `ViewModelProvider.Factory` 实现简洁的依赖注入，无 Hilt/Koin 负担。
 - **Room** - 本地持久化，支持 Flow 和 Paging 3。
 
 ### 网络与数据
 - **Retrofit & OkHttp** - 网络请求。
 - **Kotlin Serialization** - 现代化 JSON 解析。
 - **Coil** - Compose 图片加载。
-- **Chucker** - 手机端网络日志查看器。
 
 ### 质量与性能
 - **KSP** - 快速注解处理。
 - **Timber** - 结构化日志。
-- **Strong Skipping Mode** - 优化 Compose 性能。
+- **GitHub Actions** - 自动化编译与签名发布。
 - **生命周期感知状态** - 使用 `collectAsStateWithLifecycle` 提升资源效率。
 
 ## 📦 项目结构
 
-```
+```text
 WanAndroidCompose/
-├── app/
-│   ├── src/main/java/com/syf/wanandroidcompose/
-│   │   ├── common/          # 可复用基础组件 (MVI, ViewModels)
-│   │   ├── home/            # 首页模块 (文章, 轮播图)
-│   │   ├── project/         # 项目模块 (分类列表)
-│   │   ├── tree/            # 体系模块 (知识层级)
-│   │   ├── profile/         # 个人中心与设置
-│   │   ├── login/           # 登录注册流程
-│   │   ├── network/         # Retrofit 配置与 Result 封装
-│   │   ├── tint/            # 动态主题与颜色系统
-│   │   ├── i18n/            # 多语言支持
-│   │   └── theme/           # Compose 字体与形状定义
-│   └── build.gradle.kts
-├── gradle/libs.versions.toml # 版本目录
-└── COMPOSE-AUDIT-REPORT.md   # Compose 性能审计报告
+├── app/                  # Android 应用核心模块
+│   └── src/main/java/    # 采用功能分包 (Feature-based packaging)
+├── design-system/        # UI/UX 设计规范 (Single Source of Truth)
+├── docs/                 # 项目相关文档与素材
+├── .github/workflows/    # CI/CD 流水线 (GitHub Actions)
+└── AGENTS.md             # AI 助手专属开发规范与指令
 ```
+
 
 ## 🚀 开始使用
 
