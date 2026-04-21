@@ -59,6 +59,12 @@ jobs:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
 
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/*.apk
+
   deploy:
     name: Deploy
     needs: build
