@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.paparazzi)
     // Optional, provides the @Serialize annotation for autogeneration of Serializers.
 }
 
@@ -71,6 +72,12 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 //    kotlin {
 //        compilerOptions {
 //            optIn.add("kotlin.RequiresOptIn")
@@ -80,6 +87,14 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
+        }
     }
 }
 
@@ -141,7 +156,12 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     //测试
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.paparazzi)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation("io.mockk:mockk-android:1.13.13")
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

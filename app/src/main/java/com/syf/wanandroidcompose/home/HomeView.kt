@@ -106,12 +106,34 @@ fun HomeView(navController: NavController) {
         state.errorMsg?.let { snackbarHostState.showSnackbar(it) }
     }
 
+    HomeContent(
+        state = state,
+        onAction = viewModel::sendAction,
+        snackbarHostState = snackbarHostState
+    )
+}
+
+/**
+ * 首页渲染内容，无状态 Composable，方便测试
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun HomeContent(
+    state: HomeListState,
+    onAction: (HomeAction) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val bgColor = listOf(colorScheme.primary, colorScheme.secondary, colorScheme.tertiary, colorScheme.error, colorScheme.primaryContainer, colorScheme.secondaryContainer)
+    val listState = rememberLazyListState()
+    val pullToRefreshState = rememberPullToRefreshState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 下拉刷新容器
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
             state = pullToRefreshState,
-            onRefresh = { viewModel.sendAction(HomeAction.RefreshAllData) },
+            onRefresh = { onAction(HomeAction.RefreshAllData) },
             modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
@@ -121,7 +143,7 @@ fun HomeView(navController: NavController) {
                 // 轮播图
                 item {
                     if (state.getBannerData.isNotEmpty()) {
-                        Carouse(banners = state.getBannerData, onBannerClick = { url -> viewModel.sendAction(HomeAction.ClickArticle(url)) })
+                        Carouse(banners = state.getBannerData, onBannerClick = { url -> onAction(HomeAction.ClickArticle(url)) })
                     } else {
                         // 轮播图占位符
                         BannerPlaceholder()
@@ -157,7 +179,7 @@ fun HomeView(navController: NavController) {
                         ChipTabRow(
                             tabs = state.categories,
                             selectedTabId = state.selectedCategoryId,
-                            onTabSelected = { id -> viewModel.sendAction(HomeAction.SelectCategory(id)) }
+                            onTabSelected = { id -> onAction(HomeAction.SelectCategory(id)) }
                         )
                     } else {
                         // 分类 Tab 占位符
@@ -169,7 +191,7 @@ fun HomeView(navController: NavController) {
                 if (state.getArticleData.isNotEmpty()) {
                     items(state.getArticleData, key = { it.id }) { item ->
                         ArticleItem(item) {
-                            viewModel.sendAction(HomeAction.ClickArticle(item.link))
+                            onAction(HomeAction.ClickArticle(item.link))
                         }
                     }
                 } else {
@@ -182,7 +204,7 @@ fun HomeView(navController: NavController) {
                     // 当列表滚动到底部时，触发加载更多
                     LaunchedEffect(listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index) {
                         if (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1) {
-                            viewModel.sendAction(HomeAction.LoadMoreArticle)
+                            onAction(HomeAction.LoadMoreArticle)
                         }
                     }
 

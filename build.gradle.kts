@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.paparazzi) apply false
     // 依赖注入相关插件
     // Hilt插件，用于依赖注入框架的支持
 //    alias(libs.plugins.hilt) apply false

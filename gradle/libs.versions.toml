@@ -5,6 +5,9 @@ coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
+mockk = "1.13.13"
+turbine = "1.1.0"
+coroutinesTest = "1.9.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 lifecycleRuntimeKtx = "2.10.0"
@@ -58,9 +61,13 @@ lifecycleViewmodelNav3 = "2.11.0-alpha02"
 kotlinSerialization = "2.2.21"
 kotlinxSerializationCore = "1.9.0"
 material3AdaptiveNav3 = "1.3.0-alpha09"
+paparazzi = "2.0.0-alpha04"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -115,6 +122,8 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
 androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "material3AdaptiveNav3" }
+paparazzi = { module = "app.cash.paparazzi:paparazzi", version.ref = "paparazzi" }
+paparazzi-gradle-plugin = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
 [plugins]
 # Android 相关插件
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -131,6 +140,10 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 # 数据库相关插件
 # 数据库相关插件
 room = { id = "androidx.room", version.ref = "room" }
+
+
+# 截屏测试插件
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 
 
 # Optional plugins
