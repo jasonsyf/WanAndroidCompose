@@ -143,4 +143,37 @@ class HomeViewModelTest {
             assertFalse(errorState.isRefreshing)
         }
     }
+
+    @Test
+    fun `loadMoreArticle updates loading more state and hasMore`() = runTest {
+        // 准备模拟分页数据
+        val moreArticles = ArticleListData(
+            curPage = 1,
+            datas = listOf(ArticleData(id = 10, title = "More Data")),
+            offset = 20,
+            over = true, // 最后一页
+            pageCount = 2,
+            size = 20,
+            total = 21
+        )
+
+        // 模拟 fetchMoreArticles 过程
+        coEvery { repository.fetchMoreArticles(1) } returns flowOf(
+            Result.Loading,
+            Result.Success(moreArticles)
+        )
+
+        viewModel.state.test {
+            awaitItem() // 消费初始状态
+
+            viewModel.sendAction(HomeAction.LoadMoreArticle)
+
+            val loadingState = awaitItem()
+            assertTrue("Should be loading more", loadingState.isLoadingMore)
+
+            val successState = awaitItem()
+            assertFalse("Should stop loading more", successState.isLoadingMore)
+            assertFalse("Should not have more data", successState.hasMore)
+        }
+    }
 }

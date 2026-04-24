@@ -38,6 +38,9 @@ package-lock.json
 *.jks
 *.keystore
 !release.keystore # 如果你使用的是 CI 解密流程，本地生成的可以忽略
+
+# 忽略本地生成的说明文档与指南
 /TESTING-GUIDE.md
 /SNAPSHOT-TESTING-GUIDE.md
 /UI-TESTING-GUIDE.md
+/GRADLE-UPGRADE-GUIDE.md

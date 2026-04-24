@@ -4,7 +4,6 @@ import java.util.Locale
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.room)
@@ -66,11 +65,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     testOptions {
@@ -98,15 +94,39 @@ android {
     }
 }
 
-android.applicationVariants.all {
-    outputs.all {
-        val buildTypeName = buildType.name.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase() else it.toString()
-        }
-        val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-            "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+androidComponents {
+    onVariants { variant ->
+        val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+        val capitalName = variant.name.replaceFirstChar { it.uppercase() }
+        
+        // Register a copy task to rename the APK
+        tasks.register<Copy>("rename${capitalName}Apk") {
+            from(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.APK))
+            into(layout.buildDirectory.dir("outputs/renamed-apks"))
+            
+            val versionName = android.defaultConfig.versionName
+            val buildTypeName = variant.buildType?.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase() else it.toString()
+            } ?: ""
+            
+            rename { fileName ->
+                if (fileName.endsWith(".apk")) {
+                    "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
+                } else fileName
+            }
+        }
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    // https://github.com/cashapp/paparazzi/issues/2111
+    reports.html.required = false
 }
 
 room {

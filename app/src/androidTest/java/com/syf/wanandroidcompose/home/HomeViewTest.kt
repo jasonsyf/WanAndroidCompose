@@ -59,4 +59,27 @@ class HomeViewTest {
         composeTestRule.onNodeWithText("Click Me").performClick()
         verify { onAction(HomeAction.ClickArticle("url_1")) }
     }
+
+    @Test
+    fun scrollingToBottom_triggersLoadMore() {
+        // 1. 准备足够多的数据以产生滚动
+        val articles = List(20) { ArticleData(id = it, title = "Article $it", link = "url_$it") }
+        val state = HomeListState(getArticleData = articles, hasMore = true)
+        val onAction: (HomeAction) -> Unit = mockk(relaxed = true)
+
+        // 2. 渲染 UI
+        composeTestRule.setContent {
+            WanAndroidComposeTheme {
+                HomeContent(state = state, onAction = onAction)
+            }
+        }
+
+        // 3. 滚动到最后一个可见项 (footer)
+        // 注意：totalItemsCount 包含轮播图、标题、分类等，所以 index 需要计算准确
+        // 简单处理：直接查找列表并滚动到底部
+        composeTestRule.onNode(hasScrollToNodeAction()).performScrollToIndex(articles.size + 3) // 大约位置
+
+        // 4. 验证 Action
+        verify { onAction(HomeAction.LoadMoreArticle) }
+    }
 }
