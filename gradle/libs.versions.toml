@@ -147,5 +147,6 @@ paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 
 # Optional plugins
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization"}
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
 
 

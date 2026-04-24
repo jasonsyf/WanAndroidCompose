@@ -101,11 +101,6 @@ fun HomeView(navController: NavController) {
         }
     }
 
-    // 监听错误消息以显示 Snackbar
-    LaunchedEffect(state.errorMsg) {
-        state.errorMsg?.let { snackbarHostState.showSnackbar(it) }
-    }
-
     HomeContent(
         state = state,
         onAction = viewModel::sendAction,
@@ -127,6 +122,11 @@ fun HomeContent(
     val bgColor = listOf(colorScheme.primary, colorScheme.secondary, colorScheme.tertiary, colorScheme.error, colorScheme.primaryContainer, colorScheme.secondaryContainer)
     val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
+
+    // 监听错误消息以显示 Snackbar (用于测试)
+    LaunchedEffect(state.errorMsg) {
+        state.errorMsg?.let { snackbarHostState.showSnackbar(it) }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 下拉刷新容器
