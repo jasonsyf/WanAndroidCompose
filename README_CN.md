@@ -6,10 +6,11 @@
 
 **基于 Jetpack Compose 构建的现代化 Android 学习平台**
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1%2B-purple.svg)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Compose-最新版-brightgreen.svg)](https://developer.android.com/jetpack/compose)
+[![AGP](https://img.shields.io/badge/AGP-9.1.1-blue.svg)](https://developer.android.com/studio/releases/gradle-plugin)
+[![Gradle](https://img.shields.io/badge/Gradle-9.4.1-blue.svg)](https://gradle.org/releases/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![API](https://img.shields.io/badge/API-24%2B-orange.svg)](https://android-arsenal.com/api?level=24)
 
 [English](README.md)
 
@@ -24,18 +25,22 @@
 - 🌐 **网络层** - Retrofit + OkHttp 自定义拦截器，集成 `Result<T>` 封装。
 - 🌈 **动态主题** - 支持多种主题模式（亮色/暗色/系统）、对比度等级和自定义字体样式。
 - 🌍 **多语言支持** - 内置中英文切换。
-- 🚀 **自动化工作流**:
-    - **CI (Build & Test)**: 每次推送均会自动进行 Lint 检查与编译验证。
-    - **CD (Auto Release)**: 通过 Git Tag (`v*`) 触发自动签名与 GitHub Release 发布。
-- 🤖 **AI 协作**: 专为 Gemini CLI 优化，内置 `AGENTS.md` 智能助手指南。
+- 📱 **自适应布局** - 使用 Material 3 Adaptive Navigation Suite 适配不同屏幕尺寸。
 
-## 📂 功能模块
+## 🛡️ 开发工作流与质量保障
 
-- 🏠 **首页** - 文章列表、轮播图及每日更新。
-- 📂 **项目** - 玩 Android 社区分类项目展示。
-- 🌿 **体系** - 知识体系与权威导航。
-- 👤 **我的** - 用户管理、设置与个性化配置。
-- 🔑 **登录/注册** - 完整的身份验证流程。
+项目拥有一套严苛的自动化质量控制体系，由 **Git Hooks** 和 **GitHub Actions** 驱动：
+
+### ⚓ Git Hooks (本地质量门禁)
+- **Pre-commit**: 自动执行 `ktlint` 格式检查，拦截超大图片资源 (>200KB)，扫描并预警调试日志。
+- **Commit-msg**: 强制执行 **Conventional Commits** 规范，并要求包含中文描述。
+- **Pre-push**: 推送前强制运行 **单元测试**、**Android Lint** 和 **UI 截屏验证**，确保“带病”代码不出本地。
+
+### 🤖 CI/CD 流水线 (GitHub Actions)
+- **并行执行**: Lint 检查与编译任务并行运行，大幅缩短反馈周期。
+- **包体积监控**: 自动对比当前分支与主分支的 APK 大小，并在 PR 下方自动发表对比报告。
+- **截屏测试**: 使用 **Paparazzi** 进行像素级 UI 视觉回归检测。
+- **自动发布**: 推送以 `v*` 开头的 Tag 时，自动触发签名编译并发布 GitHub Release。
 
 ## 🧪 测试体系
 
@@ -51,7 +56,7 @@
 ### 核心
 - **Jetpack Compose** - 现代化声明式 UI 框架。
 - **Navigation Compose** - 类型安全导航。
-- **Manual DI** - 使用 `WanAndroidApplication` 结合 `ViewModelProvider.Factory` 实现简洁的依赖注入，无 Hilt/Koin 负担。
+- **Hilt** - 依赖注入（部分模块仍保留手动注入以示演示）。
 - **Room** - 本地持久化，支持 Flow 和 Paging 3。
 
 ### 网络与数据
@@ -60,56 +65,35 @@
 - **Coil** - Compose 图片加载。
 
 ### 质量与性能
-- **KSP** - 快速注解处理。
-- **Timber** - 结构化日志。
-- **GitHub Actions** - 自动化编译与签名发布。
-- **生命周期感知状态** - 使用 `collectAsStateWithLifecycle` 提升资源效率。
+- **Gradle 9.4.1** - 最新版构建系统，极致构建性能。
+- **AGP 9.1.1** - 支持最新的 Android 平台特性。
+- **配置缓存 (Configuration Cache)** - 已开启，增量构建秒开。
+- **Strong Skipping Mode** - 极致优化的 Compose 重组性能。
 
 ## 📦 项目结构
 
 ```text
 WanAndroidCompose/
 ├── app/                  # Android 应用核心模块
-│   └── src/main/java/    # 采用功能分包 (Feature-based packaging)
-├── design-system/        # UI/UX 设计规范 (Single Source of Truth)
-├── docs/                 # 项目相关文档与素材
-├── .github/workflows/    # CI/CD 流水线 (GitHub Actions)
-└── AGENTS.md             # AI 助手专属开发规范与指令
+├── scripts/              # 本地质量自动化脚本 (Git Hooks)
+├── design-system/        # UI/UX 设计规范
+├── .github/workflows/    # CI/CD 流水线配置
+└── gradle/libs.versions.toml # 统一版本管理
 ```
-
 
 ## 🚀 开始使用
 
 ### 环境要求
-- Android Studio Ladybug | 2024.2.1 或更高版本
+- **Android Studio Meerkat | 2024.3.1** 或更高版本
 - JDK 17 或更高版本
 - Android SDK API 24+
-- Gradle 8.10+
+- Gradle 9.4+
 
 ### 构建
 1. 克隆仓库。
 2. 在 Android Studio 中打开。
-3. 同步 Gradle 并运行。
-
-## 🎯 核心亮点
-
-### 优化的 MVI ViewModel
-项目使用自定义的 `BaseViewModelOptimized` 处理：
-- 状态持久化与重放。
-- 协程异常捕获。
-- 基于 Action 的副作用处理。
-
-### 动态着色系统 (Tint System)
-允许用户切换：
-- **主题模式**: 亮色、暗色、系统随动。
-- **对比度**: 标准、中等、高对比。
-- **字体样式**: 系统、楷体、宋体、衬线、等宽。
-
-### 性能优化
-遵循 Jetpack Compose 最佳实践：
-- 使用 `collectAsStateWithLifecycle` 进行高效状态采集。
-- 在 LazyLayout 中使用 `key` 优化列表性能（进行中）。
-- 稳定领域模型，减少不必要的重组。
+3. 同步 Gradle。**Git Hooks** 将在首次构建时自动安装。
+4. 运行应用。
 
 ## 📄 开源协议
 Copyright 2024 Sun Yufeng. 基于 Apache License, Version 2.0 授权。
