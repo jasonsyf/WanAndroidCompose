@@ -170,7 +170,7 @@ jobs:
             cat report.txt | head -n 25 >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "SIZE_REPORT=⚠️ 无法获取基准包，无法执行对比。" >> $GITHUB_OUTPUT
+            echo "SIZE_REPORT=⚠️ 未能找到主分支基准包，跳过对比。提示：请确保 master 分支已成功运行过流水线并生成了 app-release 产物。" >> $GITHUB_OUTPUT
           fi
 
       # 3.5: 发布结果评论 (Post Report to PR Comment)
