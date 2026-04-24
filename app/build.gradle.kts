@@ -4,12 +4,12 @@ import java.util.Locale
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.room)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.paparazzi)
     // Optional, provides the @Serialize annotation for autogeneration of Serializers.
 }
 
@@ -65,11 +65,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 //    kotlin {
 //        compilerOptions {
@@ -81,17 +84,49 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
+        }
+    }
 }
 
-android.applicationVariants.all {
-    outputs.all {
-        val buildTypeName = buildType.name.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase() else it.toString()
-        }
-        val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-            "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+androidComponents {
+    onVariants { variant ->
+        val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+        val capitalName = variant.name.replaceFirstChar { it.uppercase() }
+        
+        // Register a copy task to rename the APK
+        tasks.register<Copy>("rename${capitalName}Apk") {
+            from(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.APK))
+            into(layout.buildDirectory.dir("outputs/renamed-apks"))
+            
+            val versionName = android.defaultConfig.versionName
+            val buildTypeName = variant.buildType?.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase() else it.toString()
+            } ?: ""
+            
+            rename { fileName ->
+                if (fileName.endsWith(".apk")) {
+                    "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
+                } else fileName
+            }
+        }
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    // https://github.com/cashapp/paparazzi/issues/2111
+    reports.html.required = false
 }
 
 room {
@@ -141,7 +176,12 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     //测试
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.paparazzi)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation("io.mockk:mockk-android:1.13.13")
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

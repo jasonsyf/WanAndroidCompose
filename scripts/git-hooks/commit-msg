@@ -1,0 +1,28 @@
+#!/bin/bash
+# commit-msg hook
+# 强制 Conventional Commits 规范，并要求包含中文描述
+
+MSG_FILE=$1
+MSG=$(cat "$MSG_FILE")
+
+# 1. 校验 Conventional Commits 格式
+# 格式: <type>(<scope>): <subject>
+REGEXP="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.*\))?: .+"
+
+if [[ ! $MSG =~ $REGEXP ]]; then
+    echo "❌ 提交信息格式不正确！"
+    echo "正确示例: feat(home): 增加轮播图逻辑"
+    echo "规范参考: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert"
+    exit 1
+fi
+
+# 2. 校验中文描述 (必须包含至少一个中文字符)
+# 使用 perl 的 Han 属性匹配，兼容性更好
+if ! echo "$MSG" | perl -Mutf8 -C -ne 'exit 0 if /\p{Han}/; exit 1'; then
+    echo "❌ 提交信息必须包含中文描述！"
+    echo "原因: 纯英文描述已被禁用，请在 subject 部分加入中文说明。"
+    exit 1
+fi
+
+echo "✅ 提交信息规范校验通过！"
+exit 0

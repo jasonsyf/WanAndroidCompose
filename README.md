@@ -35,6 +35,15 @@
 - 👤 **Profile** - User management, settings, and personalization.
 - 🔑 **Login/Register** - Complete authentication flow.
 
+## 🧪 Testing
+
+The project maintains a high quality standard through a comprehensive testing suite:
+- **Unit Tests**: Business logic and state flow validation (JUnit 4 + MockK + Turbine).
+- **Snapshot Tests**: Pixel-perfect UI regression (Paparazzi).
+- **UI Tests**: Interaction and rendering verification (Compose Test).
+
+See the [TESTING-GUIDE.md](TESTING-GUIDE.md) for more details.
+
 ## 🛠️ Tech Stack
 
 ### Core

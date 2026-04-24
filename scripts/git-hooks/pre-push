@@ -1,0 +1,30 @@
+#!/bin/bash
+echo "--- Running pre-push hook ---"
+
+# 1. 单元测试
+echo "🔍 运行单元测试..."
+./gradlew :app:testDebugUnitTest --quiet
+if [ $? -ne 0 ]; then
+    echo "❌ 单元测试失败！推送已被拦截。请先修复测试。"
+    exit 1
+fi
+
+# 2. Android Lint 检查 (新增)
+echo "🔍 运行 Android Lint 检查 (lintDebug)..."
+./gradlew lintDebug --quiet
+if [ $? -ne 0 ]; then
+    echo "❌ Lint 检查失败！请修复代码中的严重问题后再推送。"
+    exit 1
+fi
+
+# 3. UI 截屏回归测试 (Paparazzi)
+echo "🔍 验证 UI 截屏 (Paparazzi)..."
+./gradlew verifyPaparazziDebug --quiet
+if [ $? -ne 0 ]; then
+    echo "❌ UI 截屏测试未通过！发现视觉回归问题。"
+    echo "请运行 ./gradlew recordPaparazziDebug 查看差异并更新基准图。"
+    exit 1
+fi
+
+echo "✅ pre-push 验证通过！允许推送。"
+exit 0
