@@ -1,134 +1,181 @@
 # GitHub Actions 持续集成与交付 (CI/CD) 配置文件
+# GitHub Actions Continuous Integration and Delivery (CI/CD) Configuration
+# 该文件定义了项目在 GitHub 上的全自动化流程：代码扫描、编译测试、体积监控与版本发布
 name: Android CI/CD
 
+# 触发规则 (Trigger Rules)：定义流水线在何种情况下被激活
 on:
   push:
+    # 场景 1：当代码推送到 master 分支时运行 (Standard push to master)
     branches: [ "master" ]
+    # 场景 2：当推送版本标签时运行 (e.g., v1.0.0)，触发自动化发布流程
     tags:
       - 'v*'
   pull_request:
+    # 场景 3：当发起合并请求到 master 分支时运行，用于代码质量预检 (PR Quality Gate)
     branches: [ "master" ]
 
 jobs:
-  # 任务一：静态分析 (Lint)
+  # --------------------------------------------------------------------------------
+  # 任务一：静态分析 (Lint) | Job 1: Static Analysis (Lint)
+  # 目的：在合并代码前发现潜在的 Android 规范错误、性能问题或安全隐患
+  # 策略：仅在 PR 阶段并行运行，提高反馈速度且不阻塞普通的 Push 流程
+  # --------------------------------------------------------------------------------
   lint:
     name: Static Analysis (Lint)
+    # 仅在触发事件为合并请求时执行 (Run only on Pull Requests)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      # 1.1: 拉取代码 (Checkout Source Code)
+      - name: 1.1 Checkout Code
         uses: actions/checkout@v4
-      - name: Set up JDK 17
+
+      # 1.2: 配置 Java 运行环境 (Setup Java Environment)
+      # cache: gradle 会自动缓存依赖包，极大缩短后续构建时间
+      - name: 1.2 Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
-      - name: Run Lint Debug
+
+      # 1.3: 运行 Android Lint 检查 (Run Android Lint)
+      # lintDebug 专注于检查调试变体，速度比全量扫描更快且满足日常开发需求
+      - name: 1.3 Run Lint Debug
         run: ./gradlew lintDebug
 
-  # 任务二：编译与测试 (Build & Test)
+  # --------------------------------------------------------------------------------
+  # 任务二：编译与测试 (Build & Test) | Job 2: Compilation & Testing
+  # 目的：确保代码逻辑正确，并生成可供下载和签署的 APK 安装包
+  # 策略：所有 Push 和 PR 都会触发，是项目稳定性的核心防线
+  # --------------------------------------------------------------------------------
   build:
     name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      # 2.1: 拉取代码 (Checkout Source Code)
+      # fetch-depth: 0 拉取完整历史，确保版本号自动生成等插件能获取正确的 Git 信息
+      - name: 2.1 Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up JDK 17
+
+      # 2.2: 配置 Java 运行环境 (Setup Java Environment)
+      - name: 2.2 Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
-      - name: Grant execute permission for gradlew
+
+      # 2.3: 赋予 Gradle 脚本执行权限 (Grant Executable Permissions)
+      # 确保 CI 虚拟机环境能够正常调用 ./gradlew 命令
+      - name: 2.3 Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Verify Secrets
+
+      # 2.4: 关键参数校验 (Verify Essential Secrets)
+      # 在正式编译前检查 GitHub Secrets，防止因缺少签名配置导致的后续编译失败
+      - name: 2.4 Verify Secrets
         run: |
           if [ -z "${{ secrets.KEYSTORE_FILE }}" ]; then echo "ERROR: KEYSTORE_FILE is missing"; exit 1; fi
           if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then echo "ERROR: KEYSTORE_PASSWORD is missing"; exit 1; fi
-      - name: Run Unit Tests
+
+      # 2.5: 运行单元测试 (Execute Unit Tests)
+      # 执行所有本地逻辑测试，确保新代码没有破坏已有业务逻辑
+      - name: 2.5 Run Unit Tests
         run: ./gradlew testDebugUnitTest
-      - name: Build Debug APK
+
+      # 2.6: 编译 Debug 版 APK (Assemble Debug APK)
+      # 生成未签名的、仅供日常开发测试使用的 APK 文件
+      - name: 2.6 Build Debug APK
         run: ./gradlew assembleDebug
-      - name: Decode Keystore
+
+      # 2.7: 解密并还原签名密钥 (Restore Signing Keystore)
+      # 将 GitHub Secrets 中 Base64 格式的密钥安全地还原为物理文件
+      - name: 2.7 Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > "${{ github.workspace }}/release.keystore"
-      - name: Build Release APK
+
+      # 2.8: 编译并签署 Release 版 APK (Assemble & Sign Release APK)
+      # 使用还原的密钥进行正式签名，生成符合市场分发要求的安装包
+      - name: 2.8 Build Release APK
         run: ./gradlew assembleRelease
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      - name: Upload Debug APK
+
+      # 2.9: 归档 Debug 产物 (Archive Debug Artifacts)
+      # 将生成的 APK 保存到 Actions 页面，方便开发者直接下载到手机测试
+      - name: 2.9 Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
-      - name: Upload Release APK
+
+      # 2.10: 归档 Release 产物 (Archive Release Artifacts)
+      # 保存已签名的安装包，该文件将作为下方“包体积监控”和“部署”任务的输入
+      - name: 2.10 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: app/build/outputs/apk/release/*.apk
 
-  # ----------------------------------------------------------------
-  # 任务三：包体积监控 (Size Report) - 新增
-  # 目的：对比当前分支与主分支的 APK 大小，防止包体积意外增长
-  # 策略：仅在 PR 阶段运行，对比结果将作为评论发在 PR 下方
-  # ----------------------------------------------------------------
+  # --------------------------------------------------------------------------------
+  # 任务三：包体积监控 (Size Report) | Job 3: App Size Monitoring
+  # 目的：对比当前代码与主分支包体积，防止因引入大库或未压缩图片导致的体积膨胀
+  # 策略：仅在 PR 阶段运行，对比分析结果将自动以评论形式反馈在 PR 页面
+  # --------------------------------------------------------------------------------
   size-report:
     name: App Size Report
     if: github.event_name == 'pull_request'
-    needs: build # 必须等待编译完成后执行
+    needs: build # 必须依赖 build 任务生成的 APK 产物
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write # 授权写 PR 评论的权限
+      pull-requests: write # 显式授权，允许 Job 在合并请求中发表评论
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # 步骤 3.1: 下载当前分支的 APK (从刚才的 build 任务下载)
-      - name: Download Current APK
+      # 3.1: 下载当前分支的 APK (Download Current Branch APK)
+      - name: 3.1 Download Current APK
         uses: actions/download-artifact@v4
         with:
           name: app-release
           path: current-apk
 
-      # 步骤 3.2: 下载主分支 (master) 的最新成功产物作为基准
-      # 使用 GitHub CLI 进行跨工作流下载
-      - name: Download Base APK from Master
+      # 3.2: 获取主分支的基准包 (Fetch Base APK from Master)
+      # 使用 GitHub CLI 从 master 分支下载最近一次成功的 Release 包
+      - name: 3.2 Download Base APK from Master
         run: |
-          gh run download --branch master --name app-release --dir base-apk || echo "No base APK found on master"
+          gh run download --branch master --name app-release --dir base-apk || echo "No base APK found"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 步骤 3.3: 安装 Diffuse 工具 (由 Jake Wharton 开发的 Android 差异分析神器)
-      - name: Install Diffuse
+      # 3.3: 安装差异分析工具 (Install Diffuse Tool)
+      # Diffuse 是 Android 领域最专业的 APK 差异分析工具，可深入对比 Dex、资源和体积
+      - name: 3.3 Install Diffuse
         run: |
           curl -L https://github.com/JakeWharton/diffuse/releases/latest/download/diffuse-all.jar -o diffuse.jar
 
-      # 步骤 3.4: 执行对比并生成报告
-      - name: Compare APK Sizes
+      # 3.4: 执行体积对比 (Execute Size Comparison)
+      # 对比基准包与当前包，并提取关键的增量数据 (Dex, Arsc, Total Size)
+      - name: 3.4 Compare APK Sizes
         id: compare
         run: |
           CURRENT_APK=$(ls current-apk/*.apk | head -n 1)
           BASE_APK=$(ls base-apk/*.apk | head -n 1 || echo "")
-          
           if [ -f "$BASE_APK" ]; then
-            # 使用 diffuse 对比两个 APK，并提取 Markdown 格式的摘要
             java -jar diffuse.jar diff "$BASE_APK" "$CURRENT_APK" --text report.txt
-            # 简单提取报告摘要
             echo "SIZE_REPORT<<EOF" >> $GITHUB_OUTPUT
-            cat report.txt | head -n 20 >> $GITHUB_OUTPUT
+            cat report.txt | head -n 25 >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "SIZE_REPORT=⚠️ 未能找到主分支基准包，跳过对比。" >> $GITHUB_OUTPUT
+            echo "SIZE_REPORT=⚠️ 无法获取基准包，无法执行对比。" >> $GITHUB_OUTPUT
           fi
 
-      # 步骤 3.5: 将结果作为评论发布在 PR 下方
-      - name: Post PR Comment
+      # 3.5: 发布结果评论 (Post Report to PR Comment)
+      # 将分析结果直接展示在 PR 讨论区，让代码审查者一眼看到体积变化
+      - name: 3.5 Post PR Comment
         uses: actions/github-script@v7
         with:
           script: |
@@ -142,23 +189,33 @@ jobs:
         env:
           REPORT: ${{ steps.compare.outputs.SIZE_REPORT }}
 
-  # 任务四：发布部署 (Deploy)
+  # --------------------------------------------------------------------------------
+  # 任务四：发布部署 (Deploy) | Job 4: Release Deployment
+  # 目的：将正式签名的 APK 自动发布到仓库的 Release 页面
+  # 策略：仅在推送版本标签时运行，实现自动生成发版说明和文件挂载
+  # --------------------------------------------------------------------------------
   deploy:
     name: Deploy
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # 授权写权限，以便创建 GitHub Release
     steps:
-      - name: Checkout Code
+      # 4.1: 拉取代码 (Checkout Source Code)
+      - name: 4.1 Checkout Code
         uses: actions/checkout@v4
-      - name: Download Release APK
+
+      # 4.2: 下载正式签名的 APK (Download Signed APK)
+      - name: 4.2 Download Release APK
         uses: actions/download-artifact@v4
         with:
           name: app-release
           path: release-artifacts
-      - name: Create GitHub Release
+
+      # 4.3: 创建 GitHub Release (Create GitHub Release)
+      # 自动根据 Commit 历史生成 ChangeLog，并将 APK 挂载为发布附件
+      - name: 4.3 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: release-artifacts/*.apk
