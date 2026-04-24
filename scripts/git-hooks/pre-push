@@ -9,9 +9,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 2. UI 截屏回归测试 (Paparazzi)
+# 2. Android Lint 检查 (新增)
+echo "🔍 运行 Android Lint 检查 (lintDebug)..."
+./gradlew lintDebug --quiet
+if [ $? -ne 0 ]; then
+    echo "❌ Lint 检查失败！请修复代码中的严重问题后再推送。"
+    exit 1
+fi
+
+# 3. UI 截屏回归测试 (Paparazzi)
 echo "🔍 验证 UI 截屏 (Paparazzi)..."
-# 使用 verify 任务对比基准图，确保没有视觉回归
 ./gradlew verifyPaparazziDebug --quiet
 if [ $? -ne 0 ]; then
     echo "❌ UI 截屏测试未通过！发现视觉回归问题。"
