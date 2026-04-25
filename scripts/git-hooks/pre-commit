@@ -1,44 +1,61 @@
 #!/bin/bash
-echo "--- Running pre-commit hook ---"
+# =================================================================================
+# Git pre-commit 钩子 (增量检查版)
+# =================================================================================
+# 触发时机：执行 git commit 之前
+# 设计思路：仅针对本次提交涉及的文件运行检查，最大化开发效率。
 
-# 1. 代码格式检查 (ktlint)
-echo "🔍 检查代码格式 (ktlint)..."
-./gradlew ktlintCheck --quiet
-if [ $? -ne 0 ]; then
-    echo "❌ ktlint 检查失败！请先运行 ./gradlew ktlintFormat 修复格式。"
-    exit 1
+echo "--- 🛠️ 正在执行提交前增量检查 (Pre-commit Hook) ---"
+
+# 获取暂存区（Staged）中的 .kt 文件列表
+STAGED_KT_FILES=$(git diff --cached --name-only --diff-filter=AM | grep ".kt$" | tr '\n' ' ')
+
+# 1. 精准文件级增量格式检查 (Ktlint)
+# 将暂存的文件名转换为逗号分隔的字符串，传给 Gradle。
+if [ ! -z "$STAGED_KT_FILES" ]; then
+    echo "🔍 [1/3] 正在对变动文件进行精准检查..."
+    # 将空格分隔的文件列表转换为逗号分隔
+    FILES_COMMA=$(echo "$STAGED_KT_FILES" | sed 's/ /,/g' | sed 's/,$//')
+    ./gradlew ktlintCheck -PktlintFiles="$FILES_COMMA" --quiet
+
+    if [ $? -ne 0 ]; then
+        echo "❌ 格式检查失败！请先修复暂存文件中的格式问题。"
+        exit 1
+    fi
+else
+    echo "✨ [1/3] 未发现 Kotlin 代码变动，跳过检查。"
 fi
 
-# 2. 大图资源拦截 (> 200KB)
-echo "🔍 检查新增大图资源 (> 200KB)..."
-# 仅检查新添加(A)或修改(M)的文件
+# 2. 静态资源规范拦截
+# 拦截超过 200KB 的大图，防止仓库体积膨胀。
+echo "🔍 [2/3] 检查新增大图资源..."
 STAGED_IMAGES=$(git diff --cached --name-only --diff-filter=AM | grep -E "\.(png|jpg|jpeg|webp)$")
 if [ ! -z "$STAGED_IMAGES" ]; then
     for img in $STAGED_IMAGES; do
         if [ -f "$img" ]; then
-            # macOS 下 du -k 输出格式略有不同，这里做通用处理
+            # 兼容 macOS/Linux 的文件大小获取
             size=$(du -k "$img" | cut -f1)
             if [ $size -gt 200 ]; then
-                echo "❌ 发现超大图片资源: $img (${size}KB)。请压缩至 200KB 以下后再提交。"
+                echo "❌ 拦截超大图片: $img (${size}KB)。"
+                echo "💡 建议：请先压缩至 200KB 以下，或使用 WebP 格式。"
                 exit 1
             fi
         fi
     done
 fi
 
-# 3. 调试日志与敏感关键字检查
-echo "🔍 检查调试日志..."
-# 检查 println 和 Log.d/v 等，排除测试文件
-STAGED_KT_FILES=$(git diff --cached --name-only --diff-filter=AM | grep ".kt$")
+# 3. 调试日志与敏感信息扫描
+# 检查是否遗留了 println 或 Android Log.d/v 等调试日志（排除测试代码）。
 if [ ! -z "$STAGED_KT_FILES" ]; then
+    echo "🔍 [3/3] 扫描调试日志残留..."
     LOG_USAGE=$(echo "$STAGED_KT_FILES" | xargs grep -E "println\(|Log\.[dv]\(" | grep -v "Test.kt")
     if [ ! -z "$LOG_USAGE" ]; then
-        echo "⚠️ 发现代码中包含调试日志或 println："
+        echo "⚠️ 发现代码中可能包含调试日志："
         echo "$LOG_USAGE"
-        echo "建议移除后再提交，以保持线上日志整洁。"
-        # 这里设置为警告，不强制中断
+        echo "📝 建议移除后再提交，以保持线上日志整洁（非强制）。"
     fi
 fi
 
-echo "✅ pre-commit 检查通过！"
+echo "✅ 增量检查全部通过！准备提交..."
 exit 0
+
