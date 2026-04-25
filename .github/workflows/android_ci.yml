@@ -208,25 +208,28 @@ jobs:
       - name: 3.4 Compare APK Sizes
         id: compare
         run: |
-          # 精准搜索：排除 debug 包，优先匹配包含 release 关键字的 APK
-          CURRENT_APK=$(find current-apk -name "*release*.apk" | head -n 1)
-          BASE_APK=$(find base-apk -name "*release*.apk" | head -n 1)
-          
-          # 如果没找到带 release 的，再尝试找不带 debug 的
+          # 使用 -iname 忽略大小写，确保能匹配 release 和 Release
+          CURRENT_APK=$(find current-apk -iname "*release*.apk" | head -n 1)
+          BASE_APK=$(find base-apk -iname "*release*.apk" | head -n 1)
+
+          # 备选方案：如果不包含 release 关键字，则排除 debug
           [ -z "$BASE_APK" ] && BASE_APK=$(find base-apk -name "*.apk" | grep -v "debug" | head -n 1)
-          
-          echo "Current APK: $CURRENT_APK"
-          echo "Base APK: $BASE_APK"
-          
-          if [ -f "$BASE_APK" ] && [ -f "$CURRENT_APK" ]; then
-            # 使用解压后的新版 diffuse 命令，参数名为 --apk
+
+          echo "Current APK Path: $CURRENT_APK"
+          echo "Base APK Path: $BASE_APK"
+
+          if [ -n "$BASE_APK" ] && [ -n "$CURRENT_APK" ]; then
+            # 打印实际文件名以便确认
+            echo "Comparing $(basename "$BASE_APK") vs $(basename "$CURRENT_APK")"
+
             ./diffuse-0.3.0/bin/diffuse diff --apk "$BASE_APK" "$CURRENT_APK" --text report.txt
             echo "SIZE_REPORT<<EOF" >> $GITHUB_OUTPUT
             cat report.txt | head -n 25 >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "SIZE_REPORT=⚠️ 未能成功匹配基准包与当前包。原因：Base=$BASE_APK, Current=$CURRENT_APK" >> $GITHUB_OUTPUT
+            echo "SIZE_REPORT=⚠️ 路径匹配失败。Base: $BASE_APK, Current: $CURRENT_APK" >> $GITHUB_OUTPUT
           fi
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
