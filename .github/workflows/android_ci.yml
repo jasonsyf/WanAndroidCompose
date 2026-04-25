@@ -170,14 +170,17 @@ jobs:
       # 3.2: 获取主分支的基准包 (获取 Master 分支最近一次成功的 Release 包)
       - name: 3.2 Download Base APK from Master
         run: |
-          # 优先尝试下载固定名称的产物，如果失败则回溯搜索
-          if ! gh run download --branch master --name app-release --dir base-apk 2>/dev/null; then
+          # 显式指定仓库以防 gh 环境丢失上下文
+          REPO="${{ github.repository }}"
+          
+          # 优先尝试下载固定名称的产物
+          if ! gh run download --repo "$REPO" --branch master --name app-release --dir base-apk 2>/dev/null; then
             echo "⚠️ 未发现名为 'app-release' 的标准产物，正在回溯搜索 master 最近的成功记录..."
             # 寻找 master 最近一个成功的、包含产物的 Run ID
-            RUN_ID=$(gh run list --branch master --workflow "Android CI/CD" --status success --event push --limit 1 --json databaseId --jq '.[0].databaseId')
+            RUN_ID=$(gh run list --repo "$REPO" --branch master --workflow "Android CI/CD" --status success --event push --limit 1 --json databaseId --jq '.[0].databaseId')
             if [ -n "$RUN_ID" ]; then
               echo "✅ 找到基准运行 ID: $RUN_ID，正在尝试下载..."
-              gh run download $RUN_ID --dir base-apk || echo "❌ 仍未能找到可对比的产物"
+              gh run download --repo "$REPO" "$RUN_ID" --dir base-apk || echo "❌ 仍未能找到可对比的产物"
             else
               echo "❌ 未能在 master 分支找到任何成功的历史记录"
             fi
