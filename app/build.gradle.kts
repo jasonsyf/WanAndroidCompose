@@ -106,7 +106,7 @@ androidComponents {
         val capitalName = variant.name.replaceFirstChar { it.uppercase() }
         
         // Register a copy task to rename the APK
-        tasks.register<Copy>("rename${capitalName}Apk") {
+        val renameTask = tasks.register<Copy>("rename${capitalName}Apk") {
             from(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.APK))
             into(layout.buildDirectory.dir("outputs/renamed-apks"))
             
@@ -120,6 +120,12 @@ androidComponents {
                     "WanAndroid_v${versionName}_${buildTypeName}_${buildDate}.apk"
                 } else fileName
             }
+        }
+
+        // 让对应的 assemble 任务完成后自动执行重命名
+        // 使用更加稳健的 matching 方式，避免 Task 尚未创建的错误
+        tasks.matching { it.name == "assemble$capitalName" }.configureEach {
+            finalizedBy(renameTask)
         }
     }
 }

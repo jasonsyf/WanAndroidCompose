@@ -138,14 +138,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/renamed-apks/*Debug*.apk
 
       # 2.11: 归档 Release 产物 (Archive Release Artifacts)
       - name: 2.11 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/renamed-apks/*Release*.apk
 
   # --------------------------------------------------------------------------------
   # 任务三：包体积监控 (Size Report) | Job 3: App Size Monitoring
