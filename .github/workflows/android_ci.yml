@@ -195,19 +195,23 @@ jobs:
           curl -L https://github.com/JakeWharton/diffuse/releases/latest/download/diffuse-all.jar -o diffuse.jar
 
       # 3.4: 执行体积对比 (Execute Size Comparison)
-      # 对比基准包与当前包，并提取关键的增量数据 (Dex, Arsc, Total Size)
       - name: 3.4 Compare APK Sizes
         id: compare
         run: |
-          CURRENT_APK=$(ls current-apk/*.apk | head -n 1)
-          BASE_APK=$(ls base-apk/*.apk | head -n 1 || echo "")
-          if [ -f "$BASE_APK" ]; then
+          # 使用 find 递归查找，兼容各种下载路径结构
+          CURRENT_APK=$(find current-apk -name "*.apk" | head -n 1)
+          BASE_APK=$(find base-apk -name "*.apk" | head -n 1)
+          
+          echo "Current APK: $CURRENT_APK"
+          echo "Base APK: $BASE_APK"
+          
+          if [ -f "$BASE_APK" ] && [ -f "$CURRENT_APK" ]; then
             java -jar diffuse.jar diff "$BASE_APK" "$CURRENT_APK" --text report.txt
             echo "SIZE_REPORT<<EOF" >> $GITHUB_OUTPUT
             cat report.txt | head -n 25 >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "SIZE_REPORT=⚠️ 未能找到主分支基准包，跳过对比。提示：请确保 master 分支已成功运行过流水线并生成了 app-release 产物。" >> $GITHUB_OUTPUT
+            echo "SIZE_REPORT=⚠️ 未能成功匹配基准包与当前包。请检查 master 分支是否已生成有效产物。" >> $GITHUB_OUTPUT
           fi
 
       # 3.5: 发布结果评论 (Post Report to PR Comment)
