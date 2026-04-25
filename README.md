@@ -6,10 +6,11 @@
 
 **A Modern Android Learning Platform built with Jetpack Compose**
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1%2B-purple.svg)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Compose-Latest-brightgreen.svg)](https://developer.android.com/jetpack/compose)
+[![AGP](https://img.shields.io/badge/AGP-9.1.1-blue.svg)](https://developer.android.com/studio/releases/gradle-plugin)
+[![Gradle](https://img.shields.io/badge/Gradle-9.4.1-blue.svg)](https://gradle.org/releases/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![API](https://img.shields.io/badge/API-24%2B-orange.svg)](https://android-arsenal.com/api?level=24)
 
 [中文文档](README_CN.md)
 
@@ -35,6 +36,21 @@
 - 👤 **Profile** - User management, settings, and personalization.
 - 🔑 **Login/Register** - Complete authentication flow.
 
+## 🛡️ Development Workflow & Quality
+
+The project features a rigorous development workflow powered by **Git Hooks** and **GitHub Actions**:
+
+### ⚓ Git Hooks (Local Quality Gate)
+- **Pre-commit**: Automatically runs `ktlint` checks, prevents large image assets (>200KB), and warns about debug logs.
+- **Commit-msg**: Enforces **Conventional Commits** and requires Chinese descriptions.
+- **Pre-push**: Mandatory **Unit Tests**, **Android Lint**, and **UI Snapshot Verification** before code leaves your machine.
+
+### 🤖 CI/CD Pipeline (GitHub Actions)
+- **Parallel Execution**: Lint and Build jobs run in parallel for faster feedback.
+- **App Size Monitoring**: Automatically compares APK size between PR and master, posting reports directly to PR comments.
+- **Snapshot Testing**: Pixel-perfect UI regression detection using **Paparazzi**.
+- **Automated Release**: Tags starting with `v*` automatically trigger a signed APK release.
+
 ## 🧪 Testing
 
 The project maintains a high quality standard through a comprehensive testing suite:
@@ -56,13 +72,12 @@ See the [TESTING-GUIDE.md](TESTING-GUIDE.md) for more details.
 - **Retrofit & OkHttp** - Networking.
 - **Kotlin Serialization** - Modern JSON parsing.
 - **Coil** - Image loading for Compose.
-- **Chucker** - On-device network inspection.
 
 ### Quality & Performance
-- **KSP** - Fast annotation processing.
-- **Timber** - Structured logging.
+- **Gradle 9.4.1** - Latest build system performance.
+- **AGP 9.1.1** - Support for modern Android features.
+- **Configuration Cache** - Enabled for lightning-fast incremental builds.
 - **Strong Skipping Mode** - Optimized Compose performance.
-- **Lifecycle-aware State** - Uses `collectAsStateWithLifecycle` for resource efficiency.
 
 ## 📦 Project Structure
 
@@ -76,11 +91,9 @@ WanAndroidCompose/
 │   │   ├── tree/            # Tree feature (Knowledge hierarchy)
 │   │   ├── profile/         # Profile & Settings
 │   │   ├── login/           # Auth flow
-│   │   ├── network/         # Retrofit setup & Result wrappers
-│   │   ├── tint/            # Dynamic Theming & Colors
-│   │   ├── i18n/            # Localization support
 │   │   └── theme/           # Compose typography & shapes
-│   └── build.gradle.kts
+├── scripts/
+│   └── git-hooks/           # Local quality automation scripts
 ├── gradle/libs.versions.toml # Version catalog
 └── COMPOSE-AUDIT-REPORT.md   # Performance audit findings
 ```
@@ -88,35 +101,16 @@ WanAndroidCompose/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Android Studio Ladybug | 2024.2.1 or higher
+- **Android Studio Meerkat | 2024.3.1** or higher
 - JDK 17 or higher
 - Android SDK with API 24+
-- Gradle 8.10+
+- Gradle 9.4+
 
 ### Building
 1. Clone the repo.
 2. Open in Android Studio.
-3. Sync Gradle and run on an emulator or physical device.
-
-## 🎯 Key Highlights
-
-### MVI with Optimized ViewModel
-The project uses a custom `BaseViewModelOptimized` that handles:
-- State persistence and replay.
-- Coroutine error handling.
-- Event-based side effects (Actions).
-
-### Dynamic Tint System
-Allows users to switch between:
-- **Theme Modes**: Light, Dark, System.
-- **Contrast**: Standard, Medium, High.
-- **Font Styles**: System, Kaiti, Songti, Serif, Monospace.
-
-### Performance Optimized
-Follows Jetpack Compose best practices:
-- Efficient state collection with `collectAsStateWithLifecycle`.
-- Optimized list performance using `key` in LazyLayouts (In progress).
-- Stable domain models for reduced recompositions.
+3. Sync Gradle. The **Git Hooks** will be installed automatically upon the first build.
+4. Run on an emulator or physical device.
 
 ## 📄 License
 Copyright 2024 Sun Yufeng. Licensed under the Apache License, Version 2.0.
