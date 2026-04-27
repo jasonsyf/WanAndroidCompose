@@ -2,7 +2,6 @@ package com.syf.wanandroidcompose.project
 
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.syf.wanandroidcompose.R
@@ -10,10 +9,8 @@ import com.syf.wanandroidcompose.WanAndroidApplication
 import com.syf.wanandroidcompose.common.BaseViewModelOptimized
 import com.syf.wanandroidcompose.network.Result
 import com.syf.wanandroidcompose.network.RetrofitClient
-import com.syf.wanandroidcompose.home.ArticleData // 引入 Home 模块的 ArticleData
 import com.syf.wanandroidcompose.utils.NetworkUtils
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 
 /**
  * 项目模块 ViewModel
@@ -21,9 +18,9 @@ import kotlinx.coroutines.launch
  */
 class ProjectViewModel(private val repository: ProjectRepository, private val application: Application) :
     BaseViewModelOptimized<ProjectAction, ProjectState>() {
-
     // 当前加载的项目列表页码，从 1 开始
     private var currentPage = 1
+
     // 当前选中的项目分类 ID
     private var currentCid = 0
 
@@ -34,7 +31,10 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         sendAction(ProjectAction.LoadProjects(currentCid, currentPage))
     }
 
-    override fun onAction(action: ProjectAction, currentState: ProjectState?) {
+    override fun onAction(
+        action: ProjectAction,
+        currentState: ProjectState?,
+    ) {
         when (action) {
             is ProjectAction.LoadTree -> loadProjectTree()
             is ProjectAction.LoadProjects -> loadProjects(action.cid, action.page)
@@ -70,10 +70,10 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                                     isLoading = false,
                                     categories = categories,
                                     selectedCid = currentCid,
-                                    errorMsg = null
+                                    errorMsg = null,
                                 ) ?: ProjectState(
                                     categories = categories,
-                                    selectedCid = currentCid
+                                    selectedCid = currentCid,
                                 )
                             }
                             // 成功获取分类后，自动加载第一个分类的项目内容
@@ -81,14 +81,16 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                                 sendAction(ProjectAction.LoadProjects(currentCid, 1))
                             }
                         }
+
                         is Result.Error -> {
                             emitState {
                                 replayState?.copy(
                                     isLoading = false,
-                                    errorMsg = result.message
+                                    errorMsg = result.message,
                                 ) ?: ProjectState(errorMsg = result.message)
                             }
                         }
+
                         Result.Loading -> {}
                     }
                 }
@@ -101,7 +103,11 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
      * @param page 页码
      * @param isSilent 是否为静默加载（不触发 UI 加载状态变化）
      */
-    private fun loadProjects(cid: Int, page: Int, isSilent: Boolean = false) {
+    private fun loadProjects(
+        cid: Int,
+        page: Int,
+        isSilent: Boolean = false,
+    ) {
         val hasCache = (replayState?.projects?.isNotEmpty() == true)
         val isNetworkAvailable = NetworkUtils.isNetworkAvailable(application)
 
@@ -114,7 +120,7 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMsg = application.getString(R.string.error_network_unavailable)
+                        errorMsg = application.getString(R.string.error_network_unavailable),
                     )
                 }
             }
@@ -148,24 +154,26 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                     when (result) {
                         is Result.Success -> {
                             emitState {
-                                val currentProjects = if (page == 1) {
-                                    result.data // 首页则替换
-                                } else {
-                                    replayState?.projects.orEmpty() + result.data // 否则追加
-                                }
+                                val currentProjects =
+                                    if (page == 1) {
+                                        result.data // 首页则替换
+                                    } else {
+                                        replayState?.projects.orEmpty() + result.data // 否则追加
+                                    }
                                 replayState?.copy(
                                     isLoading = false,
                                     isRefreshing = false,
                                     isLoadingMore = false,
                                     projects = currentProjects,
                                     hasMore = result.data.isNotEmpty(),
-                                    errorMsg = null
+                                    errorMsg = null,
                                 ) ?: ProjectState(
                                     projects = currentProjects,
-                                    hasMore = result.data.isNotEmpty()
+                                    hasMore = result.data.isNotEmpty(),
                                 )
                             }
                         }
+
                         is Result.Error -> {
                             if (page > 1) currentPage-- // 加载更多失败时回退页码
                             if (!isSilent || !hasCache) {
@@ -174,15 +182,17 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
                                         isLoading = false,
                                         isRefreshing = false,
                                         isLoadingMore = false,
-                                        errorMsg = result.message
+                                        errorMsg = result.message,
                                     ) ?: ProjectState(errorMsg = result.message)
                                 }
                             } else {
                                 emitState {
-                                    replayState?.copy(isLoading = false, isRefreshing = false, isLoadingMore = false) ?: ProjectState()
+                                    replayState?.copy(isLoading = false, isRefreshing = false, isLoadingMore = false)
+                                        ?: ProjectState()
                                 }
                             }
                         }
+
                         Result.Loading -> {}
                     }
                 }
@@ -206,7 +216,10 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
     /**
      * 设置导航到详情页的状态
      */
-    private fun toDetail(articleId: String, link: String) {
+    private fun toDetail(
+        articleId: String,
+        link: String,
+    ) {
         emitState { replayState?.copy(navigateToDetail = link) }
     }
 
@@ -237,13 +250,16 @@ class ProjectViewModel(private val repository: ProjectRepository, private val ap
         /**
          * ViewModel 工厂，用于创建包含依赖的 ProjectViewModel
          */
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as WanAndroidApplication)
-                val apiService = RetrofitClient.create<ProjectApiService>()
-                val repository = ProjectRepository(apiService)
-                ProjectViewModel(repository, application)
+        val Factory: ViewModelProvider.Factory =
+            viewModelFactory {
+                initializer {
+                    val application =
+                        (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as WanAndroidApplication)
+                    val apiService = RetrofitClient.create<ProjectApiService>()
+                    val localDataSource = ProjectLocalDataSource(application.database.homeDao())
+                    val repository = ProjectRepository(apiService, localDataSource)
+                    ProjectViewModel(repository, application)
+                }
             }
-        }
     }
 }
