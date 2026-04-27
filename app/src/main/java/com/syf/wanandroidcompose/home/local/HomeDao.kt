@@ -5,10 +5,32 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.syf.wanandroidcompose.common.local.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HomeDao {
+    // Articles
+
+    // Categories
+    @Query("SELECT * FROM categories WHERE type = :type")
+    fun getCategoriesByType(type: Int): Flow<List<CategoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategories(categories: List<CategoryEntity>)
+
+    @Query("DELETE FROM categories WHERE type = :type")
+    suspend fun clearCategoriesByType(type: Int)
+
+    @Transaction
+    suspend fun replaceCategoriesByType(
+        type: Int,
+        categories: List<CategoryEntity>,
+    ) {
+        clearCategoriesByType(type)
+        insertCategories(categories)
+    }
+
     @Query("SELECT * FROM articles")
     fun getAllArticles(): Flow<List<ArticleEntity>>
 

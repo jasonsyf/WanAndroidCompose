@@ -2,6 +2,7 @@ package com.syf.wanandroidcompose.home.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.syf.wanandroidcompose.common.local.CategoryEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -45,6 +46,21 @@ class HomeDaoTest {
             assertEquals(1, result.size)
             assertEquals(1, result[0].id)
             assertEquals(ArticleEntity.MODULE_PROJECT, result[0].moduleType)
+        }
+
+    @Test
+    fun testReplaceCategoriesByType() =
+        runBlocking {
+            val oldCategory = CategoryEntity(id = 1, name = "Old", type = CategoryEntity.TYPE_PROJECT)
+            dao.insertCategories(listOf(oldCategory))
+
+            val newCategory = CategoryEntity(id = 2, name = "New", type = CategoryEntity.TYPE_PROJECT)
+            dao.replaceCategoriesByType(CategoryEntity.TYPE_PROJECT, listOf(newCategory))
+
+            val result = dao.getCategoriesByType(CategoryEntity.TYPE_PROJECT).first()
+            // 预期只有新的分类，如果 replaceCategoriesByType 逻辑不完整（没删旧的），则会返回 2 个
+            assertEquals(1, result.size)
+            assertEquals("New", result[0].name)
         }
 
     private fun createFakeArticle(
