@@ -6,8 +6,8 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [ArticleEntity::class, BannerEntity::class, WeChatAccountEntity::class],
-    version = 2,
-    exportSchema = true
+    version = 3,
+    exportSchema = true,
 )
 @TypeConverters(ArticleTypeConverters::class)
 abstract class HomeDatabase : RoomDatabase() {

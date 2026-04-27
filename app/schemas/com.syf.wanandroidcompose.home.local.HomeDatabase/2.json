@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "d27a64464427869ea9f8aeb2dd32c724",
+    "identityHash": "fc54af661e5c15379fac8b487d507838",
     "entities": [
       {
         "tableName": "articles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `title` TEXT NOT NULL, `link` TEXT NOT NULL, `author` TEXT NOT NULL, `shareUser` TEXT NOT NULL, `chapterName` TEXT NOT NULL, `superChapterName` TEXT NOT NULL, `chapterId` INTEGER NOT NULL, `superChapterId` INTEGER NOT NULL, `niceDate` TEXT NOT NULL, `desc` TEXT NOT NULL, `collect` INTEGER NOT NULL, `fresh` INTEGER NOT NULL, `top` TEXT NOT NULL, `tags` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `title` TEXT NOT NULL, `link` TEXT NOT NULL, `author` TEXT NOT NULL, `shareUser` TEXT NOT NULL, `chapterName` TEXT NOT NULL, `superChapterName` TEXT NOT NULL, `chapterId` INTEGER NOT NULL, `superChapterId` INTEGER NOT NULL, `niceDate` TEXT NOT NULL, `desc` TEXT NOT NULL, `collect` INTEGER NOT NULL, `fresh` INTEGER NOT NULL, `top` TEXT NOT NULL, `tags` TEXT NOT NULL, `moduleType` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -96,6 +96,12 @@
             "fieldPath": "tags",
             "columnName": "tags",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moduleType",
+            "columnName": "moduleType",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -217,7 +223,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd27a64464427869ea9f8aeb2dd32c724')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fc54af661e5c15379fac8b487d507838')"
     ]
   }
 }

@@ -182,6 +182,8 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     //测试
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)

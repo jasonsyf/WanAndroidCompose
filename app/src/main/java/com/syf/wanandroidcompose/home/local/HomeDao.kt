@@ -12,6 +12,9 @@ interface HomeDao {
     @Query("SELECT * FROM articles")
     fun getAllArticles(): Flow<List<ArticleEntity>>
 
+    @Query("SELECT * FROM articles WHERE moduleType = :moduleType")
+    fun getArticlesByModule(moduleType: Int): Flow<List<ArticleEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertArticles(articles: List<ArticleEntity>)
 
