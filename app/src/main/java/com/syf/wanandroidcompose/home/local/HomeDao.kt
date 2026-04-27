@@ -31,6 +31,28 @@ interface HomeDao {
         insertCategories(categories)
     }
 
+    @Query("SELECT * FROM articles WHERE moduleType = :moduleType AND chapterId = :chapterId")
+    fun getArticlesByChapter(
+        moduleType: Int,
+        chapterId: Int,
+    ): Flow<List<ArticleEntity>>
+
+    @Query("DELETE FROM articles WHERE moduleType = :moduleType AND chapterId = :chapterId")
+    suspend fun clearArticlesByChapter(
+        moduleType: Int,
+        chapterId: Int,
+    )
+
+    @Transaction
+    suspend fun replaceArticlesByChapter(
+        moduleType: Int,
+        chapterId: Int,
+        articles: List<ArticleEntity>,
+    ) {
+        clearArticlesByChapter(moduleType, chapterId)
+        insertArticles(articles)
+    }
+
     @Query("SELECT * FROM articles")
     fun getAllArticles(): Flow<List<ArticleEntity>>
 

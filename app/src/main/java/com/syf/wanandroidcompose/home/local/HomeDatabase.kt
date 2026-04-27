@@ -7,7 +7,7 @@ import com.syf.wanandroidcompose.common.local.CategoryEntity
 
 @Database(
     entities = [ArticleEntity::class, BannerEntity::class, WeChatAccountEntity::class, CategoryEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(ArticleTypeConverters::class)

@@ -8,6 +8,7 @@ data class CategoryEntity(
     @PrimaryKey val id: Int,
     val name: String,
     val type: Int,
+    val parentId: Int = 0,
 ) {
     companion object {
         const val TYPE_PROJECT = 1
