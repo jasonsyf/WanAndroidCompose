@@ -61,10 +61,10 @@ import com.syf.wanandroidcompose.tint.onPrimaryDark
 import com.syf.wanandroidcompose.tint.onPrimaryLight
 import com.syf.wanandroidcompose.tint.primaryDark
 import com.syf.wanandroidcompose.tint.primaryLight
-import com.syf.wanandroidcompose.project.ProjectViewModel
-import com.syf.wanandroidcompose.project.ProjectView
-import com.syf.wanandroidcompose.tree.TreeViewModel
-import com.syf.wanandroidcompose.tree.TreeView
+import com.syf.wanandroidcompose.project.projectViewModel
+import com.syf.wanandroidcompose.project.projectView
+import com.syf.wanandroidcompose.tree.treeViewModel
+import com.syf.wanandroidcompose.tree.treeView
 import com.syf.wanandroidcompose.profile.ProfileViewModel
 import com.syf.wanandroidcompose.profile.ProfileView
 import kotlinx.serialization.Serializable
@@ -342,7 +342,7 @@ fun HomeDestination(rootNavController: NavController) {
 @Composable
 fun ProjectDestination(rootNavController: NavController) {
     val viewModel: ProjectViewModel = viewModel(factory = ProjectViewModel.Factory)
-    ProjectView(viewModel = viewModel, rootNavController = rootNavController)
+    projectView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
 /**
@@ -352,7 +352,7 @@ fun ProjectDestination(rootNavController: NavController) {
 @Composable
 fun TreeDestination(rootNavController: NavController) {
     val viewModel: TreeViewModel = viewModel(factory = TreeViewModel.Factory)
-    TreeView(viewModel = viewModel, rootNavController = rootNavController)
+    treeView(viewModel = viewModel, rootNavController = rootNavController)
 }
 
 /**
