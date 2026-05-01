@@ -1,0 +1,9 @@
+[*.{kt,kts}]
+indent_size = 4
+insert_final_newline = true
+max_line_length = 140
+# 允许 Compose 的 PascalCase 命名规范
+ktlint_standard_function-naming = disabled
+# 优化换行与逗号
+ktlint_standard_trailing-comma-on-call-site = enabled
+ktlint_standard_trailing-comma-on-declaration-site = enabled

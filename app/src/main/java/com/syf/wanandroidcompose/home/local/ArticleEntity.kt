@@ -30,13 +30,20 @@ data class ArticleEntity(
     val collect: Boolean,
     val fresh: Boolean,
     val top: String,
-    val tags: List<ArticleTag>
-)
+    val tags: List<ArticleTag>,
+    val moduleType: Int = MODULE_HOME,
+) {
+    companion object {
+        const val MODULE_HOME = 0
+        const val MODULE_PROJECT = 1
+        const val MODULE_TREE = 2
+    }
+}
 
 /**
  * 将网络数据模型 `ArticleData` 转换为数据库实体模型 `ArticleEntity`。
  */
-fun ArticleData.toEntity(): ArticleEntity {
+fun ArticleData.toEntity(moduleType: Int = ArticleEntity.MODULE_HOME): ArticleEntity {
     return ArticleEntity(
         id = id,
         title = title,
@@ -52,7 +59,8 @@ fun ArticleData.toEntity(): ArticleEntity {
         collect = collect,
         fresh = fresh,
         top = top,
-        tags = tags
+        tags = tags,
+        moduleType = moduleType,
     )
 }
 
@@ -75,7 +83,7 @@ fun ArticleEntity.toData(): ArticleData {
         collect = collect,
         fresh = fresh,
         top = top,
-        tags = tags
+        tags = tags,
     )
 }
 

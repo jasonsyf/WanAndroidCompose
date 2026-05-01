@@ -13,23 +13,12 @@ plugins {
     // Optional, provides the @Serialize annotation for autogeneration of Serializers.
 }
 
-
 android {
     namespace = "com.syf.wanandroidcompose"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     signingConfigs {
         create("release") {
-//            // TODO: 请修改以下配置为您的实际签名信息
-//            storeFile = file("path/to/your/keystore.jks")  // 密钥库文件路径
-//            storePassword = "your_store_password"          // 密钥库密码
-//            keyAlias = "your_key_alias"                    // 密钥别名
-//            keyPassword = "your_key_password"              // 密钥密码
-//
-            // 推荐做法：使用环境变量或 local.properties 存储敏感信息
-            // 示例：
             storeFile = (System.getenv("KEYSTORE_FILE") ?: project.findProperty("KEYSTORE_FILE")?.toString())?.let { file(it) }
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: project.findProperty("KEYSTORE_PASSWORD")?.toString()
             keyAlias = System.getenv("KEY_ALIAS") ?: project.findProperty("KEY_ALIAS")?.toString()
@@ -74,11 +63,6 @@ android {
             isIncludeAndroidResources = true
         }
     }
-//    kotlin {
-//        compilerOptions {
-//            optIn.add("kotlin.RequiresOptIn")
-//        }
-//    }
 
     buildFeatures {
         compose = true
@@ -105,7 +89,6 @@ androidComponents {
         val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
         val capitalName = variant.name.replaceFirstChar { it.uppercase() }
         
-        // Register a copy task to rename the APK
         val renameTask = tasks.register<Copy>("rename${capitalName}Apk") {
             from(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.APK))
             into(layout.buildDirectory.dir("outputs/renamed-apks"))
@@ -122,22 +105,31 @@ androidComponents {
             }
         }
 
-        // 让对应的 assemble 任务完成后自动执行重命名
-        // 使用更加稳健的 matching 方式，避免 Task 尚未创建的错误
         tasks.matching { it.name == "assemble$capitalName" }.configureEach {
             finalizedBy(renameTask)
         }
     }
 }
 
+// 在顶层配置所有 Test 任务
 tasks.withType<Test>().configureEach {
-    // https://github.com/cashapp/paparazzi/issues/2111
+    // 关键修复：解决 M1 Mac 上 Robolectric Native 库全量运行时的 UnsatisfiedLinkError
+    // 设置每个测试类都在独立进程运行
+    forkEvery = 1L
+    
+    // 设置系统属性
+    systemProperty("robolectric.graphicsMode", "NATIVE")
+    systemProperty("robolectric.sqliteMode", "NATIVE")
+    systemProperty("robolectric.offline", "false")
+    
+    // Paparazzi 兼容性
     reports.html.required = false
 }
 
 room {
     schemaDirectory("$projectDir/schemas")
 }
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -151,37 +143,27 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.navigation.compose)
-    // 网络相关
     implementation(libs.okhttp3)
     implementation(libs.retrofit)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.okhttp.logging)
     implementation(libs.timber)
     implementation(libs.coilcompose)
-    // 通过OkHttp的拦截器机制
-    // 实现在应用通知栏显示网络请求功能
-    // https://github.com/ChuckerTeam/chucker
-    // debug 下的依赖
     debugImplementation(libs.chucker)
-    // prod 下的空依赖
     releaseImplementation(libs.chucker.no.op)
-    //序列化 kotlin
     implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    // Room 数据库支持
     implementation(libs.androidx.room.runtime)
-    // 使用 KSP 插件
     ksp(libs.androidx.room.compiler)
     kspAndroidTest(libs.hilt.compiler)
     kspAndroidTest(libs.hilt.android)
-    // Kotlin 协程支持
     implementation(libs.androidx.room.ktx)
-    // Paging 3 集成支持
     implementation(libs.androidx.room.paging)
     compileOnly(libs.ksp.gradlePlugin)
-    //测试
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
