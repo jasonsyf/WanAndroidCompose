@@ -41,7 +41,6 @@ class HomeDaoTest {
             val treeArticle = createFakeArticle(id = 2, moduleType = ArticleEntity.MODULE_TREE)
             dao.insertArticles(listOf(projectArticle, treeArticle))
 
-            // 当前 getArticlesByModule 逻辑未实现过滤，预期会返回所有文章，导致 assertEquals 失败
             val result = dao.getArticlesByModule(ArticleEntity.MODULE_PROJECT).first()
             assertEquals(1, result.size)
             assertEquals(1, result[0].id)
@@ -58,7 +57,6 @@ class HomeDaoTest {
             dao.replaceCategoriesByType(CategoryEntity.TYPE_PROJECT, listOf(newCategory))
 
             val result = dao.getCategoriesByType(CategoryEntity.TYPE_PROJECT).first()
-            // 预期只有新的分类，如果 replaceCategoriesByType 逻辑不完整（没删旧的），则会返回 2 个
             assertEquals(1, result.size)
             assertEquals("New", result[0].name)
         }
