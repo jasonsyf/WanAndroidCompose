@@ -49,7 +49,7 @@ import java.nio.charset.StandardCharsets
  * @param rootNavController 根导航控制器，用于页面跳转
  */
 @Composable
-fun projectView(
+fun ProjectView(
     viewModel: ProjectViewModel = viewModel(),
     rootNavController: NavController,
 ) {

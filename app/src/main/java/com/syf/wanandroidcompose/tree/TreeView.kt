@@ -72,7 +72,7 @@ import java.nio.charset.StandardCharsets
  * @param rootNavController 根导航控制器
  */
 @Composable
-fun treeView(
+fun TreeView(
     viewModel: TreeViewModel = viewModel(),
     rootNavController: NavController,
 ) {
@@ -123,7 +123,7 @@ fun treeView(
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             // 左侧：父分类列表
-            parentCategoryList(
+            ParentCategoryList(
                 categories = state.categories,
                 selectedParentId = state.selectedParentId,
                 isLoading = state.isLoading && state.categories.isEmpty(),
@@ -131,7 +131,7 @@ fun treeView(
             )
 
             // 右侧：子分类及文章内容
-            subCategoryContent(
+            SubCategoryContent(
                 subCategories = state.subCategories,
                 selectedCid = state.selectedCid,
                 articles = state.articles,
@@ -159,7 +159,7 @@ fun treeView(
  * 父分类列表（左侧分栏）
  */
 @Composable
-private fun parentCategoryList(
+private fun ParentCategoryList(
     categories: List<TreeCategory>,
     selectedParentId: Int,
     isLoading: Boolean,
@@ -174,7 +174,7 @@ private fun parentCategoryList(
     ) {
         if (isLoading) {
             items(15) {
-                skeletonParentCategoryItem()
+                SkeletonParentCategoryItem()
             }
         } else {
             items(
@@ -213,7 +213,7 @@ private fun parentCategoryList(
  * 子分类内容区域（右侧分栏）
  */
 @Composable
-private fun subCategoryContent(
+private fun SubCategoryContent(
     subCategories: List<TreeCategory>,
     selectedCid: Int,
     articles: List<ArticleData>,
@@ -311,7 +311,7 @@ private fun subCategoryContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(6) {
-                            skeletonArticleItem()
+                            SkeletonArticleItem()
                         }
                     }
                 } else if (articles.isEmpty() && !isRefreshing) {
@@ -379,7 +379,7 @@ private fun subCategoryContent(
  * 父分类骨架屏项
  */
 @Composable
-private fun skeletonParentCategoryItem() {
+private fun SkeletonParentCategoryItem() {
     Box(
         modifier =
             Modifier
@@ -405,7 +405,7 @@ private fun skeletonParentCategoryItem() {
  * 文章列表骨架屏项
  */
 @Composable
-private fun skeletonArticleItem() {
+private fun SkeletonArticleItem() {
     Column(
         modifier =
             Modifier
