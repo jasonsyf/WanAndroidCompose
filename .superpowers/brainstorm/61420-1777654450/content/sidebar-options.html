@@ -1,0 +1,64 @@
+<h2>体系页面侧边栏优化建议</h2>
+<p class="subtitle">针对左侧列表未选中态白色突兀的问题，提供以下改进方案：</p>
+
+<div class="options">
+  <div class="option" data-choice="neutral" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>柔和中性 (Soft Neutral)</h3>
+      <p>使用比主内容区略深或略暖的颜色（如暖灰色）作为侧边栏背景，降低视觉疲劳，使选中项在对比下自然突出。</p>
+      <div class="mockup" style="margin-top: 10px;">
+        <div class="mockup-body" style="display: flex; height: 150px; background: #fdf6ed;">
+            <div style="width: 60px; background: #fff1e0; border-right: 1px solid #fed7aa;">
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; background: white; border-left: 3px solid #f97316;">体系</div>
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; opacity: 0.5;">项目</div>
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; opacity: 0.5;">导航</div>
+            </div>
+            <div style="flex: 1; padding: 10px;">
+                <div style="height: 10px; width: 40px; background: #fdba74; border-radius: 2px;"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="brand" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>品牌色微调 (Brand Tint)</h3>
+      <p>为侧边栏添加极低透明度的品牌橙色调（约3%-5%），增强整体设计的协调性，消除冷冰冰的白底感。</p>
+      <div class="mockup" style="margin-top: 10px;">
+        <div class="mockup-body" style="display: flex; height: 150px; background: #fff7ed;">
+            <div style="width: 60px; background: #ffedd5;">
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; font-weight: bold;">体系</div>
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; opacity: 0.4;">项目</div>
+                <div style="padding: 10px; font-size: 10px; color: #9a3412; opacity: 0.4;">导航</div>
+            </div>
+            <div style="flex: 1; padding: 10px; background: white;">
+                <div style="height: 10px; width: 40px; background: #fed7aa; border-radius: 2px;"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="depth" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>内凹深度感 (Inset Depth)</h3>
+      <p>给侧边栏增加微弱的内阴影或边框分隔，使其在视觉上比内容区域更“深”一层，营造层次感。</p>
+      <div class="mockup" style="margin-top: 10px;">
+        <div class="mockup-body" style="display: flex; height: 150px; background: #fdf6ed;">
+            <div style="width: 60px; background: #f3f4f6; box-shadow: inset -2px 0 4px rgba(0,0,0,0.05);">
+                <div style="padding: 10px; font-size: 10px; color: #2563eb; background: #e0e7ff; font-weight: bold;">体系</div>
+                <div style="padding: 10px; font-size: 10px; color: #4b5563;">项目</div>
+                <div style="padding: 10px; font-size: 10px; color: #4b5563;">导航</div>
+            </div>
+            <div style="flex: 1; padding: 10px;">
+                <div style="height: 10px; width: 40px; background: #d1d5db; border-radius: 2px;"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

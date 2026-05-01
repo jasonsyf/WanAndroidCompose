@@ -117,6 +117,31 @@ fun TreeView(
             }
         }
 
+    TreeContent(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onCategoryClick = onCategoryClick,
+        onSubCategoryClick = onSubCategoryClick,
+        onRefresh = onRefresh,
+        onLoadMore = onLoadMore,
+        onArticleClick = onArticleClick,
+    )
+}
+
+/**
+ * 体系页面渲染内容
+ * 无状态 Composable，方便测试
+ */
+@Composable
+fun TreeContent(
+    state: TreeState,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    onCategoryClick: (Int) -> Unit,
+    onSubCategoryClick: (Int) -> Unit,
+    onRefresh: () -> Unit,
+    onLoadMore: () -> Unit,
+    onArticleClick: (ArticleData) -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
