@@ -48,6 +48,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -117,6 +119,31 @@ fun TreeView(
             }
         }
 
+    TreeContent(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onCategoryClick = onCategoryClick,
+        onSubCategoryClick = onSubCategoryClick,
+        onRefresh = onRefresh,
+        onLoadMore = onLoadMore,
+        onArticleClick = onArticleClick,
+    )
+}
+
+/**
+ * 体系页面渲染内容
+ * 无状态 Composable，方便测试
+ */
+@Composable
+fun TreeContent(
+    state: TreeState,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    onCategoryClick: (Int) -> Unit,
+    onSubCategoryClick: (Int) -> Unit,
+    onRefresh: () -> Unit,
+    onLoadMore: () -> Unit,
+    onArticleClick: (ArticleData) -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -170,7 +197,16 @@ private fun ParentCategoryList(
             Modifier
                 .width(100.dp)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f))
+                .drawBehind {
+                    // 右侧细分割线
+                    drawLine(
+                        color = Color(0xFFFED7AA),
+                        start = Offset(size.width, 0f),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                },
     ) {
         if (isLoading) {
             items(15) {
@@ -192,6 +228,18 @@ private fun ParentCategoryList(
                             .padding(vertical = 16.dp, horizontal = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
+                    // 选中态左侧指示条
+                    if (isSelected) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.CenterStart)
+                                    .width(4.dp)
+                                    .height(24.dp)
+                                    .clip(RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
+                                    .background(MaterialTheme.colorScheme.primary),
+                        )
+                    }
                     Text(
                         text = category.name,
                         style = MaterialTheme.typography.bodyMedium,
